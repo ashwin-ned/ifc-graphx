@@ -111,10 +111,13 @@
 
   <main class="canvas-wrap">
     <div class="tabs">
-      <button id="tab2d" class="tab active">Floor plan</button>
-      <button id="tab3d" class="tab">IFC model</button>
+      <button id="tab2d" class="tab active" title="Floor plan only (T cycles)">Plan</button>
+      <button id="tabSplit" class="tab" title="Both side by side (T cycles)">Split</button>
+      <button id="tab3d" class="tab" title="IFC model only (T cycles)">IFC model</button>
       <span id="tabNote" class="muted small"></span>
     </div>
+    <div class="panes" id="panes">
+    <div class="pane pane2d" id="pane2d">
     <svg id="plan" xmlns="http://www.w3.org/2000/svg">
       <g id="viewport">
         <g id="gWalls"></g>
@@ -126,16 +129,31 @@
         <g id="gLabels"></g>
       </g>
     </svg>
-    <div id="view3d" class="view3d" hidden>
+    <div class="hud" id="hud">scroll to zoom &middot; drag to pan &middot; F to fit</div>
+    </div>
+
+    <div class="splitter" id="splitter" hidden></div>
+
+    <div class="pane pane3d" id="view3d" hidden>
       <div id="canvas3d" class="canvas3d"></div>
-      <div class="cutbar">
-        <label>cut at <b id="cutVal">off</b></label>
-        <input id="cutSlider" type="range" min="0" max="100" value="100">
-        <button id="btnFit3d" class="hbtn">Fit</button>
+      <div class="cutbar" id="cutbar">
+        <label class="chk" title="Section follows the floor you are annotating">
+          <input type="checkbox" id="cutFollow" checked> follow floor
+        </label>
+        <label class="chk" title="Show only the selected floor, not everything below">
+          <input type="checkbox" id="cutSlab" checked> single floor
+        </label>
+        <input id="cutSlider" type="range" min="0" max="1000" value="1000"
+               title="Slice the model vertically">
+        <b id="cutVal">off</b>
+        <button id="btnTop3d" class="hbtn" title="Look straight down">Top</button>
+        <button id="btnFit3d" class="hbtn" title="Frame the whole model">Fit</button>
       </div>
       <div id="load3d" class="loading3d"></div>
+      <div class="hud3d" id="hud3d">drag to orbit &middot; right-drag to pan &middot;
+        wheel to zoom &middot; double-click to centre</div>
     </div>
-    <div class="hud" id="hud">scroll to zoom &middot; drag to pan &middot; F to fit</div>
+    </div>
     <div class="banner" id="banner"></div>
   </main>
 

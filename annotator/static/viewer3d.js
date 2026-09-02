@@ -7,14 +7,14 @@
  * independent look at the same building rather than a prettier view of the same
  * derived data.
  *
- * three.js and web-ifc are imported dynamically, on first use only. They are
- * several megabytes; an annotator who never opens this panel never pays for it,
- * and the 2D tool keeps working if the CDN is unreachable.
+ * three.js and web-ifc are imported dynamically, on first use only. Only
+ * self-contained modules are fetched: three's addons (OrbitControls among them)
+ * are published with a bare `import ... from "three"` that a browser cannot
+ * resolve without an import map, so `Orbit` below replaces that one.
  *
- * Versions are pinned. web-ifc's WASM is fetched at runtime from the same
- * pinned directory, which is the arrangement ifc-viewx uses (it copies the
- * .wasm beside its bundle); an unpinned URL would let a future release change
- * the ABI under us with no warning.
+ * Versions are pinned, and web-ifc's WASM comes from the same pinned directory
+ * -- the arrangement ifc-viewx uses. An unpinned URL would let a future release
+ * change the ABI under us with no warning.
  */
 (function (root) {
   "use strict";
@@ -28,13 +28,7 @@
   async function loadLibs(onProgress) {
     if (THREE && ifcApi) return;
     onProgress && onProgress("loading 3D libraries…");
-    if (!THREE) {
-      // Only the two self-contained modules are fetched. three's own addons --
-      // OrbitControls among them -- are published with a bare `from "three"`
-      // import, which a browser cannot resolve without an import map, and
-      // loading one was what broke this view. `Orbit` below replaces it.
-      THREE = await import(THREE_URL);
-    }
+    if (!THREE) THREE = await import(THREE_URL);
     if (!ifcApi) {
       WebIFC = await import(WEBIFC_URL);
       onProgress && onProgress("starting IFC engine…");
@@ -44,13 +38,170 @@
     }
   }
 
+  /* ------------------------------------------------------------ controls */
+
+  /* Orbit / pan / dolly, in place of three's OrbitControls addon.
+   *
+   * Damped, so a drag does not feel notched, and the wheel zooms toward the
+   * cursor rather than the screen centre -- without that you cannot get inside
+   * a building without panning first.
+   *
+   * Left drag orbits, right/middle/shift drag pans, wheel dollies, double-click
+   * recentres on what you clicked. One finger orbits, two pan and pinch.
+   */
+  class Orbit {
+    constructor(camera, dom) {
+      this.camera = camera;
+      this.dom = dom;
+      this.target = new THREE.Vector3();
+      this.sph = new THREE.Spherical(20, Math.PI / 3, Math.PI / 4);
+      this._goalT = this.target.clone();
+      this._goalS = this.sph.clone();
+      this.damping = 0.25;
+      this.minDistance = 0.01;
+      this.maxDistance = Infinity;
+      this.onFocus = null;
+      this._drag = null;
+      this._touch = null;
+      this._bind();
+      this.apply(true);
+    }
+
+    /** Clamp the goal, and when `snap` jump straight to it. */
+    apply(snap) {
+      const EPS = 1e-4;
+      this._goalS.phi = Math.max(EPS, Math.min(Math.PI - EPS, this._goalS.phi));
+      this._goalS.radius = Math.max(this.minDistance,
+                                    Math.min(this.maxDistance, this._goalS.radius));
+      if (snap) {
+        this.sph.copy(this._goalS);
+        this.target.copy(this._goalT);
+      }
+      this._place();
+    }
+
+    _place() {
+      this.camera.position.copy(this.target)
+        .add(new THREE.Vector3().setFromSpherical(this.sph));
+      this.camera.lookAt(this.target);
+    }
+
+    /** Every frame: ease the current state toward the goal. */
+    update() {
+      const k = this.damping;
+      const ds = Math.abs(this.sph.radius - this._goalS.radius) +
+                 Math.abs(this.sph.phi - this._goalS.phi) +
+                 Math.abs(this.sph.theta - this._goalS.theta);
+      const dt = this.target.distanceTo(this._goalT);
+      if (ds < 1e-5 && dt < 1e-5) return;
+      this.sph.radius += (this._goalS.radius - this.sph.radius) * k;
+      this.sph.phi += (this._goalS.phi - this.sph.phi) * k;
+      this.sph.theta += (this._goalS.theta - this.sph.theta) * k;
+      this.target.lerp(this._goalT, k);
+      this._place();
+    }
+
+    rotate(dx, dy) {
+      const h = this.dom.clientHeight || 600;
+      this._goalS.theta -= (2 * Math.PI * dx) / h;
+      this._goalS.phi -= (2 * Math.PI * dy) / h;
+      this.apply();
+    }
+
+    /** Pan in the camera's own plane, scaled so a drag tracks the cursor. */
+    pan(dx, dy) {
+      const h = this.dom.clientHeight || 600;
+      const span = 2 * this.sph.radius *
+        Math.tan((this.camera.fov / 2) * Math.PI / 180);
+      const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 1);
+      this._goalT
+        .addScaledVector(right, (-dx * span) / h)
+        .addScaledVector(up, (dy * span) / h);
+      this.apply();
+    }
+
+    dolly(factor) { this._goalS.radius *= factor; this.apply(); }
+
+    /** Dolly toward the point under the cursor, the way a CAD viewer does. */
+    dollyToCursor(factor, ev) {
+      const r = this.dom.getBoundingClientRect();
+      const ndc = new THREE.Vector3(
+        ((ev.clientX - r.left) / r.width) * 2 - 1,
+        -((ev.clientY - r.top) / r.height) * 2 + 1, 0.5);
+      const ray = ndc.unproject(this.camera).sub(this.camera.position).normalize();
+      const fwd = new THREE.Vector3();
+      this.camera.getWorldDirection(fwd);
+      const denom = ray.dot(fwd);
+      if (Math.abs(denom) > 1e-6) {
+        const dist = new THREE.Vector3()
+          .subVectors(this.target, this.camera.position).dot(fwd) / denom;
+        if (Number.isFinite(dist)) {
+          const hit = this.camera.position.clone().addScaledVector(ray, dist);
+          this._goalT.lerp(hit, 1 - factor);
+        }
+      }
+      this.dolly(factor);
+    }
+
+    focus(point) { this._goalT.copy(point); this.apply(); }
+
+    _bind() {
+      const d = this.dom;
+      d.style.touchAction = "none";
+      d.addEventListener("contextmenu", (e) => e.preventDefault());
+
+      d.addEventListener("pointerdown", (e) => {
+        try { d.setPointerCapture(e.pointerId); } catch (err) { /* fine */ }
+        this._drag = { x: e.clientX, y: e.clientY,
+                       pan: e.button === 1 || e.button === 2 || e.shiftKey };
+      });
+      d.addEventListener("pointermove", (e) => {
+        if (!this._drag) return;
+        const dx = e.clientX - this._drag.x, dy = e.clientY - this._drag.y;
+        this._drag.x = e.clientX; this._drag.y = e.clientY;
+        this._drag.pan ? this.pan(dx, dy) : this.rotate(dx, dy);
+      });
+      const end = (e) => {
+        this._drag = null;
+        try { d.releasePointerCapture(e.pointerId); } catch (err) { /* fine */ }
+      };
+      d.addEventListener("pointerup", end);
+      d.addEventListener("pointercancel", end);
+      d.addEventListener("dblclick", (e) => { if (this.onFocus) this.onFocus(e); });
+
+      d.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        this.dollyToCursor(e.deltaY < 0 ? 1 / 1.15 : 1.15, e);
+      }, { passive: false });
+
+      d.addEventListener("touchmove", (e) => {
+        if (e.touches.length !== 2) return;
+        e.preventDefault();
+        const [a, b] = e.touches;
+        const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+        const mx = (a.clientX + b.clientX) / 2, my = (a.clientY + b.clientY) / 2;
+        if (this._touch) {
+          this.dolly(this._touch.d / dist);
+          this.pan(mx - this._touch.x, my - this._touch.y);
+        }
+        this._touch = { d: dist, x: mx, y: my };
+      }, { passive: false });
+      d.addEventListener("touchend", () => { this._touch = null; });
+    }
+  }
+
+  /* -------------------------------------------------------------- viewer */
+
   class Viewer {
     constructor(container) {
       this.el = container;
       this.modelID = null;
       this.meshes = [];
       this.storeys = [];
+      this.bounds = null;          // {min,max} in IFC z (metres)
       this._raf = null;
+      this._planes = [];           // shared with every material, mutated in place
     }
 
     _initScene() {
@@ -58,27 +209,32 @@
       const w = this.el.clientWidth || 800, h = this.el.clientHeight || 600;
       this.scene = new THREE.Scene();
       this.scene.background = new THREE.Color(0xeef1f6);
-
-      this.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 2000);
-      this.camera.position.set(20, 18, 20);
+      this.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 5000);
 
       this.renderer = new THREE.WebGLRenderer({ antialias: true });
       this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       this.renderer.setSize(w, h);
+      this.renderer.localClippingEnabled = true;
       this.el.appendChild(this.renderer.domElement);
 
       this.controls = new Orbit(this.camera, this.renderer.domElement);
+      this.controls.onFocus = (e) => this._focusAt(e);
 
       this.scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 2.2));
-      const d = new THREE.DirectionalLight(0xffffff, 1.4);
-      d.position.set(24, 40, 18);
-      this.scene.add(d);
+      const d1 = new THREE.DirectionalLight(0xffffff, 1.3);
+      d1.position.set(24, 40, 18);
+      this.scene.add(d1);
+      const d2 = new THREE.DirectionalLight(0xffffff, 0.5);
+      d2.position.set(-30, 20, -25);
+      this.scene.add(d2);
 
       this.root = new THREE.Group();
-      // IFC is Z-up, three.js is Y-up.
+      // IFC is Z-up, three is Y-up: (x,y,z) -> (x, z, -y), so an IFC elevation
+      // becomes a world Y and the section planes stay horizontal.
       this.root.rotation.x = -Math.PI / 2;
       this.scene.add(this.root);
 
+      this._ray = new THREE.Raycaster();
       const loop = () => {
         this._raf = requestAnimationFrame(loop);
         this.controls.update();
@@ -87,7 +243,17 @@
       loop();
     }
 
-    /** Load an IFC from a File/Blob and build the meshes. */
+    /** Double-click recentres the orbit on whatever was clicked. */
+    _focusAt(ev) {
+      const r = this.renderer.domElement.getBoundingClientRect();
+      const ndc = new THREE.Vector2(
+        ((ev.clientX - r.left) / r.width) * 2 - 1,
+        -((ev.clientY - r.top) / r.height) * 2 + 1);
+      this._ray.setFromCamera(ndc, this.camera);
+      const hits = this._ray.intersectObjects(this.meshes, false);
+      if (hits.length) this.controls.focus(hits[0].point);
+    }
+
     async load(file, onProgress) {
       await loadLibs(onProgress);
       this._initScene();
@@ -96,12 +262,11 @@
       onProgress && onProgress("reading file…");
       const buf = new Uint8Array(await file.arrayBuffer());
       onProgress && onProgress("parsing IFC…");
-      this.modelID = ifcApi.OpenModel(buf, {
-        COORDINATE_TO_ORIGIN: true,
-      });
+      this.modelID = ifcApi.OpenModel(buf, { COORDINATE_TO_ORIGIN: true });
 
       onProgress && onProgress("building geometry…");
       const byColour = new Map();
+      let skipped = 0;
       ifcApi.StreamAllMeshes(this.modelID, (mesh) => {
         const placed = mesh.geometries;
         for (let i = 0; i < placed.size(); i++) {
@@ -111,6 +276,18 @@
             geo.GetVertexData(), geo.GetVertexDataSize());
           const idx = ifcApi.GetIndexArray(
             geo.GetIndexData(), geo.GetIndexDataSize());
+
+          // Real files contain geometry web-ifc cannot triangulate -- 26 of
+          // 3114 placed geometries in one corpus model, 93 of 7665 in another,
+          // which it reports as "No basis found for brep". They come back with
+          // no vertices, and an empty BufferGeometry has an *infinite* bounding
+          // box: unioned into the model box it sends the camera to infinity and
+          // the view looks frozen rather than broken. This is that bug.
+          if (verts.length === 0 || idx.length === 0) {
+            skipped++;
+            geo.delete();
+            continue;
+          }
 
           // web-ifc interleaves position and normal, six floats per vertex.
           const n = verts.length / 6;
@@ -138,79 +315,133 @@
         }
       });
 
-      // One mesh per colour rather than per element: a 10 MB model can hold tens
+      // One mesh per colour rather than per element: a 10 MB model holds tens
       // of thousands of products, and a draw call each makes it unusable.
       for (const { colour, geos } of byColour.values()) {
         const merged = mergeGeometries(geos);
+        geos.forEach((g) => g.dispose());
         if (!merged) continue;
         const mat = new THREE.MeshLambertMaterial({
           color: new THREE.Color(colour.x, colour.y, colour.z),
           transparent: colour.w < 1, opacity: colour.w,
           side: THREE.DoubleSide,
+          clippingPlanes: this._planes,
         });
         const m = new THREE.Mesh(merged, mat);
+        m.frustumCulled = false;      // one mesh spans the whole building
         this.root.add(m);
         this.meshes.push(m);
-        geos.forEach((g) => g.dispose());
       }
 
       this.storeys = this._readStoreys();
       this.fit();
+      this.bounds = this._verticalBounds();
       onProgress && onProgress(null);
-      return { meshes: this.meshes.length, storeys: this.storeys.length };
+      return { meshes: this.meshes.length, storeys: this.storeys.length,
+               skipped, bounds: this.bounds };
     }
 
-    /** Storey names and elevations, to drive the clipping control. */
+    /** Storey names and elevations, to drive the section control. */
     _readStoreys() {
       const out = [];
       try {
         const ids = ifcApi.GetLineIDsWithType(this.modelID, WebIFC.IFCBUILDINGSTOREY);
         for (let i = 0; i < ids.size(); i++) {
           const s = ifcApi.GetLine(this.modelID, ids.get(i));
+          const e = s.Elevation ? Number(s.Elevation.value) : 0;
           out.push({
-            name: (s.Name && s.Name.value) || (s.LongName && s.LongName.value) || "storey",
-            elevation: s.Elevation ? Number(s.Elevation.value) : 0,
+            name: (s.Name && s.Name.value) ||
+                  (s.LongName && s.LongName.value) || "storey",
+            elevation: Number.isFinite(e) ? e : 0,
           });
         }
       } catch (e) { /* the model may simply have none */ }
       return out.sort((a, b) => a.elevation - b.elevation);
     }
 
-    /** Show only what lies below `z` (metres), so a floor plate can be read. */
-    setCut(z) {
-      if (!this.renderer) return;
-      if (z === null || z === undefined) {
-        this.renderer.clippingPlanes = [];
-        return;
-      }
-      this.renderer.localClippingEnabled = true;
-      // The group is rotated into Y-up, so the world plane is horizontal in Y.
-      this.renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, -1, 0), z)];
+    /** The model's own vertical extent, in IFC z (= world Y after rotation). */
+    _verticalBounds() {
+      const box = this._worldBox();
+      return box ? { min: box.min.y, max: box.max.y } : { min: 0, max: 30 };
     }
 
-    fit() {
-      if (!this.meshes.length) return;
-      // The meshes hang off a group rotated from IFC's Z-up into three's Y-up.
-      // Box3 reads world matrices, and nothing has rendered yet when fit() runs
-      // straight after load(), so those matrices are still identity and the box
-      // comes out in the wrong axes -- the model then frames off-screen.
+    /** Union of the mesh boxes, or null if nothing usable. */
+    _worldBox() {
+      if (!this.meshes.length) return null;
       this.scene.updateMatrixWorld(true);
       const box = new THREE.Box3();
-      this.meshes.forEach((m) => box.expandByObject(m));
-      if (box.isEmpty()) return;
+      for (const m of this.meshes) {
+        if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+        const b = m.geometry.boundingBox;
+        if (!b || !isFiniteBox(b)) continue;   // never let one poison the union
+        box.union(b.clone().applyMatrix4(m.matrixWorld));
+      }
+      return box.isEmpty() || !isFiniteBox(box) ? null : box;
+    }
+
+    /* ---- section ---------------------------------------------------- */
+
+    /** Keep only what lies between two IFC elevations; either may be null. */
+    setSection(bottom, top) {
+      const planes = [];
+      if (Number.isFinite(top))
+        planes.push(new THREE.Plane(new THREE.Vector3(0, -1, 0), top));
+      if (Number.isFinite(bottom))
+        planes.push(new THREE.Plane(new THREE.Vector3(0, 1, 0), -bottom));
+      // Mutated in place: every material holds a reference to this same array,
+      // so replacing it would leave them clipping against the old one.
+      this._planes.length = 0;
+      this._planes.push(...planes);
+    }
+
+    clearSection() { this.setSection(null, null); }
+
+    /** The slab a storey occupies: its elevation up to the next one. */
+    storeySlab(i, headroom) {
+      const s = this.storeys;
+      if (!s.length) return null;
+      const j = Math.max(0, Math.min(s.length - 1, i));
+      const bottom = s[j].elevation;
+      const top = j + 1 < s.length ? s[j + 1].elevation
+                                   : bottom + (headroom || 3.2);
+      // Slightly inside the slab at both ends, so the floor above is cut away
+      // and the floor below does not bleed through.
+      return { bottom: bottom + 0.02, top: top - 0.05 };
+    }
+
+    /** Index of the storey whose slab contains this elevation. */
+    storeyAt(z) {
+      let k = -1;
+      this.storeys.forEach((s, i) => { if (s.elevation <= z + 1e-6) k = i; });
+      return k;
+    }
+
+    /* ---- framing ---------------------------------------------------- */
+
+    fit() {
+      const box = this._worldBox();
+      if (!box) return;
       const size = box.getSize(new THREE.Vector3());
       const c = box.getCenter(new THREE.Vector3());
-      const r = Math.max(size.x, size.y, size.z) || 10;
-      this.controls.target.copy(c);
+      const r = Math.max(size.x, size.y, size.z);
+      if (!Number.isFinite(r) || r <= 0) return;
+
       this.camera.near = Math.max(r / 5000, 0.01);
-      this.camera.far = r * 40;
+      this.camera.far = r * 60;
       this.camera.updateProjectionMatrix();
-      // Frame the box from a corner, far enough out that it fits the vertical
-      // field of view with a little margin.
-      this.controls.sph.set(
-        r * 1.6 / Math.tan((this.camera.fov / 2) * Math.PI / 180) * 0.5,
-        Math.PI / 3.2, Math.PI / 4);
-      this.controls.minDistance = Math.max(r / 1000, 0.01);
+
+      const dist = (r * 0.72) / Math.tan((this.camera.fov / 2) * Math.PI / 180);
+      this.controls.minDistance = Math.max(r / 5000, 0.01);
+      this.controls.maxDistance = r * 25;
+      this.controls._goalT.copy(c);
+      this.controls._goalS.set(dist * 1.25, Math.PI / 3.2, Math.PI / 4);
+      this.controls.apply(true);
+    }
+
+    /** Look straight down, to compare against the floor plan. */
+    topView() {
+      this.controls._goalS.phi = 0.02;
+      this.controls._goalS.theta = 0;
       this.controls.apply();
     }
 
@@ -230,6 +461,8 @@
         m.material.dispose();
       }
       this.meshes = [];
+      this.storeys = [];
+      this.bounds = null;
       if (this.modelID !== null && ifcApi) {
         try { ifcApi.CloseModel(this.modelID); } catch (e) { /* already gone */ }
         this.modelID = null;
@@ -241,152 +474,50 @@
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this.renderer) {
         this.renderer.dispose();
-        if (this.renderer.domElement.parentNode)
-          this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+        const el = this.renderer.domElement;
+        if (el.parentNode) el.parentNode.removeChild(el);
         this.renderer = null;
       }
     }
   }
 
-  /* Orbit / pan / dolly, in place of three's OrbitControls addon.
-   *
-   * The addon is published with a bare `import ... from "three"`, which a
-   * browser refuses to resolve without an import map -- that is what broke this
-   * view. An import map would fix it, but writing the ~60 lines here removes
-   * the dependency and its failure mode altogether, and mirrors the pan/zoom
-   * already used by the 2D plan.
-   *
-   * Left drag orbits, right drag or shift-drag pans, wheel dollies. One finger
-   * orbits and two pinch, so a tablet works.
-   */
-  class Orbit {
-    constructor(camera, dom) {
-      this.camera = camera;
-      this.dom = dom;
-      this.target = new THREE.Vector3();
-      this.sph = new THREE.Spherical(20, Math.PI / 3, Math.PI / 4);
-      this.minDistance = 0.01;
-      this.maxDistance = Infinity;
-      this._drag = null;
-      this._pinch = 0;
-      this._bind();
-      this.apply();
-    }
-
-    /** Re-derive the orbit from wherever the camera currently is. */
-    syncFromCamera() {
-      this.sph.setFromVector3(
-        new THREE.Vector3().subVectors(this.camera.position, this.target));
-    }
-
-    apply() {
-      const EPS = 1e-4;
-      this.sph.phi = Math.max(EPS, Math.min(Math.PI - EPS, this.sph.phi));
-      this.sph.radius = Math.max(this.minDistance,
-                                 Math.min(this.maxDistance, this.sph.radius));
-      this.camera.position.copy(this.target)
-        .add(new THREE.Vector3().setFromSpherical(this.sph));
-      this.camera.lookAt(this.target);
-    }
-
-    rotate(dx, dy) {
-      const h = this.dom.clientHeight || 600;
-      this.sph.theta -= (2 * Math.PI * dx) / h;
-      this.sph.phi -= (2 * Math.PI * dy) / h;
-      this.apply();
-    }
-
-    /** Pan in the camera's own plane, scaled so a drag tracks the cursor. */
-    pan(dx, dy) {
-      const h = this.dom.clientHeight || 600;
-      const span = 2 * this.sph.radius *
-        Math.tan((this.camera.fov / 2) * Math.PI / 180);
-      const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 0);
-      const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 1);
-      this.target
-        .addScaledVector(right, (-dx * span) / h)
-        .addScaledVector(up, (dy * span) / h);
-      this.apply();
-    }
-
-    dolly(factor) { this.sph.radius *= factor; this.apply(); }
-
-    _bind() {
-      const d = this.dom;
-      d.style.touchAction = "none";
-      d.addEventListener("contextmenu", (e) => e.preventDefault());
-
-      d.addEventListener("pointerdown", (e) => {
-        d.setPointerCapture(e.pointerId);
-        this._drag = {
-          x: e.clientX, y: e.clientY,
-          pan: e.button === 2 || e.button === 1 || e.shiftKey,
-        };
-      });
-      d.addEventListener("pointermove", (e) => {
-        if (!this._drag) return;
-        const dx = e.clientX - this._drag.x, dy = e.clientY - this._drag.y;
-        this._drag.x = e.clientX; this._drag.y = e.clientY;
-        this._drag.pan ? this.pan(dx, dy) : this.rotate(dx, dy);
-      });
-      const end = (e) => {
-        this._drag = null;
-        try { d.releasePointerCapture(e.pointerId); } catch (err) { /* gone */ }
-      };
-      d.addEventListener("pointerup", end);
-      d.addEventListener("pointercancel", end);
-
-      d.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        this.dolly(e.deltaY < 0 ? 1 / 1.12 : 1.12);
-      }, { passive: false });
-
-      d.addEventListener("touchmove", (e) => {
-        if (e.touches.length !== 2) return;
-        e.preventDefault();
-        const [a, b] = e.touches;
-        const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-        if (this._pinch) this.dolly(this._pinch / dist);
-        this._pinch = dist;
-      }, { passive: false });
-      d.addEventListener("touchend", () => { this._pinch = 0; });
-    }
-
-    // The render loop calls this; there is no inertia to integrate.
-    update() {}
+  function isFiniteBox(b) {
+    return Number.isFinite(b.min.x) && Number.isFinite(b.min.y) &&
+           Number.isFinite(b.min.z) && Number.isFinite(b.max.x) &&
+           Number.isFinite(b.max.y) && Number.isFinite(b.max.z);
   }
 
-  /* three's BufferGeometryUtils is another import; merging positions and
-   * indices by hand keeps this file dependency-free and is all we need. */
+  /* three's BufferGeometryUtils is another import; merging by hand keeps this
+   * file dependency-free and is all we need. Empty geometries are dropped here
+   * too, belt and braces with the check at extraction. */
   function mergeGeometries(list) {
-    if (!list.length) return null;
+    const use = list.filter((g) => g.attributes.position &&
+                                   g.attributes.position.count > 0 && g.index);
+    if (!use.length) return null;
     let nv = 0, ni = 0;
-    for (const g of list) {
-      nv += g.attributes.position.count;
-      ni += g.index ? g.index.count : 0;
-    }
+    for (const g of use) { nv += g.attributes.position.count; ni += g.index.count; }
     const pos = new Float32Array(nv * 3);
     const nor = new Float32Array(nv * 3);
     const idx = new Uint32Array(ni);
     let vo = 0, io = 0;
-    for (const g of list) {
+    for (const g of use) {
       const p = g.attributes.position.array;
       const n = g.attributes.normal ? g.attributes.normal.array : null;
       pos.set(p, vo * 3);
       if (n) nor.set(n, vo * 3);
-      if (g.index) {
-        const gi = g.index.array;
-        for (let i = 0; i < gi.length; i++) idx[io + i] = gi[i] + vo;
-        io += gi.length;
-      }
+      const gi = g.index.array;
+      for (let i = 0; i < gi.length; i++) idx[io + i] = gi[i] + vo;
+      io += gi.length;
       vo += g.attributes.position.count;
     }
     const out = new THREE.BufferGeometry();
     out.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     out.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
     out.setIndex(new THREE.BufferAttribute(idx, 1));
+    out.computeBoundingBox();
+    out.computeBoundingSphere();
     return out;
   }
 
-  root.BIMSGViewer = { Viewer, loadLibs };
+  root.BIMSGViewer = { Viewer, Orbit, loadLibs, mergeGeometries };
 })(typeof globalThis !== "undefined" ? globalThis : this);

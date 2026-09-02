@@ -80,15 +80,43 @@ goes straight to that machine and none of the above applies.
 
 ## 3. Checking against the real model
 
-If your folder has the `.ifc` files in it, there is an **IFC model** tab at the
-top of the plan. It shows the actual building in 3D, straight from the source
-file, so you can check that the flat plan you are judging really matches it.
+If your folder has the `.ifc` files (or you are using the hosted link), the
+buttons at the top of the plan give you three layouts:
 
-Use it when a floor looks wrong — rooms in odd places, a storey that seems to
-contain part of another. Drag the **cut** slider to slice the building
-downwards and read one floor plate at a time; the slider is labelled with the
-storey name at that height. Press <kbd>T</kbd> to flip between the plan and the
-model.
+| Button | Shows |
+|---|---|
+| **Plan** | the floor plan alone |
+| **Split** | plan and 3D model side by side — drag the divider to rebalance |
+| **IFC model** | the 3D model alone |
+
+<kbd>T</kbd> cycles through them. **Split** is the one to work in when you are
+unsure about a floor: you judge on the plan and check against the model without
+losing your place in either.
+
+### Moving around the model
+
+Drag to orbit, right-drag (or shift-drag) to pan, scroll to zoom — the zoom
+goes toward your cursor, so point at a room and scroll to get into it.
+**Double-click anything to centre on it**, which is the quickest way to inspect
+one corner. **Fit** reframes the whole building; **Top** looks straight down,
+which is the view to compare against the plan.
+
+### Slicing through the floors
+
+The slider along the bottom cuts the model vertically, and the label tells you
+which storey you are at. Two checkboxes control it:
+
+- **follow floor** (on by default) — the section jumps to whichever storey you
+  are annotating, so switching floors on the left switches the model too and
+  you never set it by hand. Touching the slider turns this off, so you can look
+  around freely; tick it again to re-link.
+- **single floor** — show only that storey, rather than everything below it.
+  Turn it off to see the floor sitting on the ones underneath.
+
+The plan's storey list and the model's are matched by **height**, not by
+position in the list, because the pipeline sometimes re-bands storeys. If they
+disagree the label says which model storey it picked and how far off it was —
+worth a note, since it usually means the extraction got the floor wrong.
 
 The 3D view is only for checking. All your judgements are made on the plan.
 
@@ -238,7 +266,7 @@ is finished, so it is better to finish one building than to half-do three.
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Save now |
 | <kbd>[</kbd> <kbd>]</kbd> | Previous / next floor |
 | <kbd>F</kbd> | Fit the plan to the window |
-| <kbd>T</kbd> | Switch between the plan and the 3D model |
+| <kbd>T</kbd> | Cycle plan / split / model |
 | <kbd>Ctrl</kbd>+<kbd>→</kbd> / <kbd>Ctrl</kbd>+<kbd>←</kbd> | Next / previous building |
 | <kbd>?</kbd> | Quick reference |
 

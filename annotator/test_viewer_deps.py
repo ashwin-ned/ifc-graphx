@@ -65,7 +65,16 @@ const ok = (m, c) => { if (!c) bad++; console.log((c ? "  PASS " : "  FAIL ") + 
 const listeners = {};
 const dom = { clientHeight: 600, clientWidth: 800, style: {},
   addEventListener: (n, f) => { listeners[n] = f; },
+  getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }),
   setPointerCapture() {}, releasePointerCapture() {} };
+
+// The controls are damped: an input moves the *goal* and update() eases toward
+// it, so every assertion below settles the animation first rather than reading
+// a state that is still in flight.
+// update() stops easing once the residual is under 1e-5, so a settled value is
+// correct to about that, not to machine precision. Tolerances below allow it.
+const settle = (c) => { for (let i = 0; i < 200; i++) c.update(); };
+const TOL = 1e-4;
 
 const cam = new THREE.PerspectiveCamera(55, 4 / 3, 0.1, 2000);
 const c = new Orbit(cam, dom);
@@ -79,22 +88,22 @@ ok("camera looks at the target", (() => {
 })());
 
 const th0 = c.sph.theta;
-c.rotate(120, 0);
+c.rotate(120, 0); settle(c);
 ok("horizontal drag turns the camera", Math.abs(c.sph.theta - th0) > 1e-3);
 
-c.sph.phi = 0.5; c.rotate(0, -1e6);
+c.rotate(0, -1e6); settle(c);
 ok("phi stays under PI at the pole", c.sph.phi < Math.PI && c.sph.phi > 0);
-c.rotate(0, 1e6);
+c.rotate(0, 1e6); settle(c);
 ok("phi stays over 0 at the pole", c.sph.phi > 0 && c.sph.phi < Math.PI);
 
 const r0 = c.sph.radius;
-c.dolly(0.5);
-ok("dolly scales the radius", Math.abs(c.sph.radius - r0 * 0.5) < 1e-9);
-c.minDistance = 2; c.dolly(1e-4);
-ok("radius clamps to minDistance", c.sph.radius === 2);
+c.dolly(0.5); settle(c);
+ok("dolly scales the radius", Math.abs(c.sph.radius - r0 * 0.5) < TOL);
+c.minDistance = 2; c.dolly(1e-4); settle(c);
+ok("radius clamps to minDistance", Math.abs(c.sph.radius - 2) < TOL);
 
 const t0 = c.target.clone();
-c.pan(50, 0);
+c.pan(50, 0); settle(c);
 ok("pan moves the target", c.target.distanceTo(t0) > 1e-6);
 ok("pan holds the camera-target distance",
    Math.abs(cam.position.distanceTo(c.target) - c.sph.radius) < 1e-6);
@@ -109,14 +118,58 @@ ok("the listeners the viewer needs are bound",
 const before = c.sph.theta;
 listeners.pointerdown({ clientX: 100, clientY: 100, button: 0, pointerId: 1 });
 listeners.pointermove({ clientX: 160, clientY: 100, pointerId: 1 });
-listeners.pointerup({ pointerId: 1 });
+listeners.pointerup({ pointerId: 1 }); settle(c);
 ok("a left-drag orbits", Math.abs(c.sph.theta - before) > 1e-3);
 
 const tgt = c.target.clone();
 listeners.pointerdown({ clientX: 100, clientY: 100, button: 2, pointerId: 1 });
 listeners.pointermove({ clientX: 160, clientY: 130, pointerId: 1 });
-listeners.pointerup({ pointerId: 1 });
+listeners.pointerup({ pointerId: 1 }); settle(c);
 ok("a right-drag pans", c.target.distanceTo(tgt) > 1e-6);
+
+const before2 = c.sph.radius;
+listeners.wheel({ deltaY: -100, clientX: 400, clientY: 300, preventDefault() {} });
+ok("the wheel zooms in", c._goalS.radius < before2);
+const tBefore = c._goalT.clone();
+listeners.wheel({ deltaY: -100, clientX: 700, clientY: 150, preventDefault() {} });
+ok("zooming off-centre also shifts the target toward the cursor",
+   c._goalT.distanceTo(tBefore) > 1e-9);
+
+/* --- the empty-geometry trap ------------------------------------------ */
+const helpers = src.slice(src.indexOf("  function isFiniteBox(b)"),
+                          src.indexOf("  root.BIMSGViewer"));
+const H = eval(`(function(){const THREE = globalThis.THREE; ${helpers}
+  return { mergeGeometries, isFiniteBox };})()`);
+
+const empty = new THREE.BufferGeometry();
+empty.setAttribute("position", new THREE.BufferAttribute(new Float32Array(0), 3));
+empty.computeBoundingBox();
+ok("an empty BufferGeometry has a non-finite box (the bug being guarded)",
+   !H.isFiniteBox(empty.boundingBox));
+
+const cube = new THREE.BoxGeometry(2, 2, 2).toNonIndexed();
+const solid = new THREE.BufferGeometry();
+solid.setAttribute("position", cube.getAttribute("position"));
+solid.setIndex([...Array(cube.getAttribute("position").count).keys()]);
+const merged = H.mergeGeometries([solid, empty]);
+ok("merging drops the empty geometry", merged !== null);
+merged.computeBoundingBox();
+ok("the merged box stays finite", H.isFiniteBox(merged.boundingBox));
+ok("the merged box is the real one", Math.abs(merged.boundingBox.max.x - 1) < 1e-6);
+ok("merging only empties yields null", H.mergeGeometries([empty]) === null);
+
+/* --- section planes ---------------------------------------------------- */
+const grp = new THREE.Group();
+grp.rotation.x = -Math.PI / 2;
+grp.updateMatrixWorld(true);
+const w = new THREE.Vector3(3, 7, 4.5).applyMatrix4(grp.matrixWorld);
+ok("an IFC elevation becomes a world Y", Math.abs(w.y - 4.5) < 1e-6);
+const top = new THREE.Plane(new THREE.Vector3(0, -1, 0), 6);
+const bot = new THREE.Plane(new THREE.Vector3(0, 1, 0), -3);
+const inside = (v) => top.distanceToPoint(v) > 0 && bot.distanceToPoint(v) > 0;
+ok("a point at 4.5 m is inside a 3-6 m slab", inside(w));
+ok("a point at 1 m is below it", !inside(new THREE.Vector3(0, 1, 0)));
+ok("a point at 8 m is above it", !inside(new THREE.Vector3(0, 8, 0)));
 
 process.exit(bad ? 1 : 0);
 """

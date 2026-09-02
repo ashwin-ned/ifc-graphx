@@ -30,7 +30,8 @@ const S = {
   edgeFrom: null,            // {id,label} pending intra-floor link
   vertFrom: null,            // {id,label,storey,storeyName} pending cross-floor link
   dirty: false, store: null,
-  models: [], view: null, viewer: null, view3dOn: false,
+  models: [], viewer: null,
+  view: "plan", splitPct: 55, followFloor: true,
   history: [], future: [],
   view: { x: 0, y: 0, k: 30 },
 };
@@ -285,6 +286,7 @@ function gotoStorey(i) {
   renderStoreys();
   render();
   fit();
+  syncSectionToFloor();
   if (S.vertFrom)
     banner(`floor link: pick the room on ${storey().name} that connects to ` +
            `${S.vertFrom.label}`);
@@ -963,7 +965,7 @@ window.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === "ArrowRight") { e.preventDefault(); stepModel(1); return; }
   if ((e.ctrlKey || e.metaKey) && e.key === "ArrowLeft") { e.preventDefault(); stepModel(-1); return; }
   if (typing) return;
-  if (k === "t") { S.view3dOn ? show2d() : show3d(); return; }
+  if (k === "t") { cycleView(); return; }
 
   if (k === "escape") setMode("select");
   else if (k === "a") setMode("edge");
@@ -1127,95 +1129,6 @@ async function offerReconnect() {
   };
 }
 
-/* ------------------------------------------------------------- 3D view */
-
-function can3d() {
-  return S.store && typeof S.store.hasIfc === "function" && S.store.hasIfc(S.model);
-}
-
-/** "29 MB" for a published IFC, so the cost is visible before clicking. */
-function ifcSizeLabel() {
-  if (!S.store || typeof S.store.ifcBytes !== "function") return "";
-  const b = S.store.ifcBytes(S.model);
-  return b ? `${(b / 1e6).toFixed(0)} MB` : "";
-}
-
-function on3dModelChanged() {
-  const t = $("tab3d");
-  const has = can3d();
-  t.disabled = !has;
-  $("tabNote").textContent = has ? ifcSizeLabel() :
-    (S.store && S.store.mode === "dir"
-      ? "no IFC file for this model in the folder"
-      : "no IFC published for this model");
-  if (S.view3dOn && !has) show2d();
-  else if (S.view3dOn) load3d();
-}
-
-function show2d() {
-  S.view3dOn = false;
-  $("view3d").hidden = true;
-  $("plan").style.display = "";
-  $("tab2d").classList.add("active");
-  $("tab3d").classList.remove("active");
-}
-
-async function show3d() {
-  if (!can3d()) return;
-  S.view3dOn = true;
-  $("view3d").hidden = false;
-  $("plan").style.display = "none";
-  $("tab3d").classList.add("active");
-  $("tab2d").classList.remove("active");
-  await load3d();
-}
-
-let loaded3dFor = null;
-async function load3d() {
-  if (loaded3dFor === S.model) { S.viewer && S.viewer.resize(); return; }
-  const note = $("load3d");
-  const say = (t) => {
-    if (t === null || t === undefined) { note.className = "loading3d"; return; }
-    note.className = "loading3d on";
-    note.innerHTML = esc(t);
-  };
-  try {
-    const sz = ifcSizeLabel();
-    say(sz ? `downloading the IFC (${sz})…` : "loading 3D libraries…");
-    if (!S.viewer) S.viewer = new BIMSGViewer.Viewer($("canvas3d"));
-    const file = await S.store.getIfcFile(S.model);
-    const info = await S.viewer.load(file, say);
-    loaded3dFor = S.model;
-    S.viewer.resize();
-    setupCut();
-    say(null);
-    banner(`IFC loaded — ${info.storeys} storeys`);
-  } catch (e) {
-    console.error(e);
-    say("Could not load this IFC.\n\n" + (e && e.message ? e.message : "") +
-        "\n\nThe 3D view needs three.js and web-ifc from a CDN; if this " +
-        "machine is offline it will not work. Annotation is unaffected.");
-  }
-}
-
-/** Map the slider onto the model's own height, labelled by storey. */
-function setupCut() {
-  const sl = $("cutSlider"), lab = $("cutVal");
-  const sts = (S.viewer && S.viewer.storeys) || [];
-  const lo = sts.length ? sts[0].elevation : 0;
-  const hi = sts.length ? sts[sts.length - 1].elevation + 4 : 30;
-  sl.oninput = () => {
-    const f = +sl.value / 100;
-    if (f >= 1) { S.viewer.setCut(null); lab.textContent = "off"; return; }
-    const z = lo + (hi - lo) * f;
-    S.viewer.setCut(z);
-    const st = [...sts].reverse().find((s) => s.elevation <= z);
-    lab.textContent = `${z.toFixed(1)} m` + (st ? ` · ${st.name}` : "");
-  };
-  sl.value = 100; lab.textContent = "off";
-  if (S.viewer) S.viewer.setCut(null);
-}
-
 /* ----------------------------------------------------------------- init */
 
 ["lyWalls", "lyRooms", "lyEdges", "lyDoors", "lyLabels"]
@@ -1230,9 +1143,7 @@ $("btnRedo").onclick = redo;
 $("btnGuide").onclick = showGuide;
 $("btnPrev").onclick = () => stepModel(-1);
 $("btnNext").onclick = () => stepModel(1);
-$("tab2d").onclick = show2d;
-$("tab3d").onclick = show3d;
-$("btnFit3d").onclick = () => S.viewer && S.viewer.fit();
+wireViewer();
 
 function download(name, text) {
   const blob = new Blob([text], { type: "application/json" });

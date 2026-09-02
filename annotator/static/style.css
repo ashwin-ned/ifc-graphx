@@ -287,13 +287,33 @@ svg.picking{cursor:crosshair}
 .tabs .small{padding-right:8px}
 
 /* --------------------------------------------------------- 3D view */
-.view3d{position:absolute;inset:0;background:var(--bg)}
+/* Split layout: the plan and the model are siblings, so both can be shown at
+   once and either can be collapsed. Widths are driven by --split from JS. */
+.panes{position:absolute;inset:0;display:flex;overflow:hidden}
+.pane{position:relative;height:100%;overflow:hidden;min-width:0}
+.pane2d{flex:0 0 var(--split,100%)}
+.pane3d{flex:1 1 auto;background:var(--bg);border-left:1px solid var(--line)}
+.pane[hidden]{display:none}
+.splitter{
+  flex:0 0 6px;cursor:col-resize;background:var(--line);position:relative;z-index:2;
+}
+.splitter:hover,.splitter.dragging{background:var(--accent)}
+.splitter[hidden]{display:none}
 .canvas3d{position:absolute;inset:0}
 .canvas3d canvas{display:block;width:100%;height:100%}
 .cutbar{
-  position:absolute;left:12px;bottom:12px;right:12px;display:flex;align-items:center;
-  gap:10px;background:rgba(255,255,255,.94);border:1px solid var(--line);
-  border-radius:8px;padding:7px 12px;box-shadow:var(--shadow);font-size:12px;
+  position:absolute;left:10px;bottom:10px;right:10px;display:flex;align-items:center;
+  gap:10px;background:rgba(255,255,255,.95);border:1px solid var(--line);
+  border-radius:8px;padding:7px 11px;box-shadow:var(--shadow);font-size:12px;
+  flex-wrap:wrap;
+}
+.cutbar .chk{margin:0;white-space:nowrap;font-size:11.5px}
+.cutbar b{min-width:96px;text-align:right;font-variant-numeric:tabular-nums}
+.cutbar .hbtn{padding:4px 9px;font-size:11.5px}
+.hud3d{
+  position:absolute;left:10px;top:10px;color:var(--muted);font-size:11px;
+  background:rgba(255,255,255,.9);border:1px solid var(--line);
+  padding:4px 8px;border-radius:7px;pointer-events:none;
 }
 .cutbar input[type=range]{flex:1;accent-color:var(--accent)}
 .cutbar label{color:var(--muted);white-space:nowrap}
