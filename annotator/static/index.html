@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIM-Graphs Annotator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>BIM-Graphs <span>ground-truth annotator</span></h1>
+  <button id="btnUndo" class="hbtn" title="Undo (Ctrl+Z)" disabled>&#8630; Undo</button>
+  <button id="btnRedo" class="hbtn" title="Redo (Ctrl+Shift+Z)" disabled>&#8631; Redo</button>
+  <button id="btnGuide" class="hbtn" title="Annotation guide (?)">Guide</button>
+  <div class="who">
+    <label for="annotator">Annotator</label>
+    <input id="annotator" placeholder="your name" autocomplete="off">
+  </div>
+  <div class="saving" id="saveState">saved</div>
+</header>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <section id="folderSec" hidden>
+      <h2>Dataset folder</h2>
+      <button id="btnFolder" class="ghost">Open dataset folder…</button>
+      <div id="folderInfo" class="muted small"></div>
+    </section>
+
+    <section>
+      <h2>Model</h2>
+      <select id="modelSel"></select>
+      <div class="navrow">
+        <button id="btnPrev" class="hbtn" title="Previous model (Ctrl+←)">‹ Prev</button>
+        <span id="modelPos" class="muted small"></span>
+        <button id="btnNext" class="hbtn" title="Next model (Ctrl+→)">Next ›</button>
+      </div>
+      <div id="modelInfo" class="muted small"></div>
+    </section>
+
+    <section>
+      <h2>Storey <span class="muted small">(top to bottom)</span></h2>
+      <div id="storeyList" class="storeys"></div>
+    </section>
+
+    <section>
+      <h2>Progress</h2>
+      <div id="progress" class="progress"></div>
+    </section>
+
+    <section>
+      <h2>Mode</h2>
+      <div class="modes">
+        <button id="modeSelect" class="mode active">Judge <kbd>Esc</kbd></button>
+        <button id="modeEdge" class="mode">Link rooms <kbd>A</kbd></button>
+        <button id="modeVert" class="mode">Link floors <kbd>V</kbd></button>
+        <button id="modeRoom" class="mode">Mark missing room <kbd>M</kbd></button>
+      </div>
+      <div id="modeHint" class="muted small"></div>
+    </section>
+
+    <section>
+      <h2>Hierarchy</h2>
+      <div class="legend">
+        <div><span class="sw" style="background:var(--h-space)"></span>room — stated by IFC</div>
+        <div><span class="sw" style="background:var(--h-space-inf)"></span>room — recovered</div>
+        <div><span class="sw" style="background:var(--h-element)"></span>door element</div>
+        <div><span class="sw" style="background:var(--h-wall)"></span>wall</div>
+        <div><span class="sw line" style="border-color:var(--r-door)"></span>door link</div>
+        <div><span class="sw line" style="border-color:var(--r-passage)"></span>open passage</div>
+        <div><span class="sw line" style="border-color:var(--r-vertical)"></span>floor-to-floor</div>
+        <div><span class="sw line" style="border-color:var(--r-manual)"></span>added by you</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Verdict outline</h2>
+      <div class="legend">
+        <div><span class="sw" style="background:var(--v-correct)"></span>correct <kbd>1</kbd></div>
+        <div><span class="sw" style="background:var(--v-spurious)"></span>spurious <kbd>2</kbd></div>
+        <div><span class="sw" style="background:var(--v-unsure)"></span>unsure <kbd>3</kbd></div>
+        <div><span class="sw" style="background:var(--v-merge)"></span>should merge <kbd>4</kbd></div>
+        <div><span class="sw" style="background:var(--v-split)"></span>should split <kbd>5</kbd></div>
+        <div><span class="sw" style="background:var(--v-todo)"></span>unjudged <kbd>0</kbd></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Layers</h2>
+      <label class="chk"><input type="checkbox" id="lyWalls" checked> walls</label>
+      <label class="chk"><input type="checkbox" id="lyRooms" checked> rooms</label>
+      <label class="chk"><input type="checkbox" id="lyEdges" checked> links</label>
+      <label class="chk"><input type="checkbox" id="lyDoors" checked> doors</label>
+      <label class="chk"><input type="checkbox" id="lyLabels" checked> labels</label>
+    </section>
+
+    <section>
+      <button id="btnSave" class="primary">Save</button>
+      <button id="btnExport" class="ghost">Download building graph</button>
+      <button id="btnRaw" class="ghost">Download raw annotation</button>
+      <div id="localTools" hidden>
+        <button id="btnBundle" class="ghost">Download all my work</button>
+        <button id="btnImport" class="ghost">Load work from file…</button>
+        <input id="fileIn" type="file" accept=".json,application/json" hidden>
+        <div id="storageWarn" class="note" style="margin-top:8px"></div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="canvas-wrap">
+    <div class="tabs">
+      <button id="tab2d" class="tab active">Floor plan</button>
+      <button id="tab3d" class="tab">IFC model</button>
+      <span id="tabNote" class="muted small"></span>
+    </div>
+    <svg id="plan" xmlns="http://www.w3.org/2000/svg">
+      <g id="viewport">
+        <g id="gWalls"></g>
+        <g id="gRooms"></g>
+        <g id="gEdges"></g>
+        <g id="gDoors"></g>
+        <g id="gMissing"></g>
+        <g id="gVert"></g>
+        <g id="gLabels"></g>
+      </g>
+    </svg>
+    <div id="view3d" class="view3d" hidden>
+      <div id="canvas3d" class="canvas3d"></div>
+      <div class="cutbar">
+        <label>cut at <b id="cutVal">off</b></label>
+        <input id="cutSlider" type="range" min="0" max="100" value="100">
+        <button id="btnFit3d" class="hbtn">Fit</button>
+      </div>
+      <div id="load3d" class="loading3d"></div>
+    </div>
+    <div class="hud" id="hud">scroll to zoom &middot; drag to pan &middot; F to fit</div>
+    <div class="banner" id="banner"></div>
+  </main>
+
+  <aside class="inspector">
+    <div id="inspector"><div class="empty muted">Select a room or link on the plan.</div></div>
+    <section style="margin-top:18px">
+      <h2>Floor-to-floor links</h2>
+      <div id="vertList" class="vlist"></div>
+    </section>
+  </aside>
+
+</div>
+
+<div class="mask" id="mask"><div class="dlg" id="dlg"></div></div>
+
+<script src="config.js"></script>
+<script src="compose.js"></script>
+<script src="store.js"></script>
+<script src="fsdir.js"></script>
+<script src="viewer3d.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

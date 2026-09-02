@@ -1,0 +1,20 @@
+# Annotations are the annotators' work, returned as files and collected
+# elsewhere. Committing them would publish judgements made about real buildings
+# and would conflict every time two people push.
+annotator/annotations/*.json
+
+# Built by annotator/build_site.py, and by the Pages workflow on every push.
+dist/
+
+# The IFC corpus and everything derived from it beyond the plans. These are
+# large and their licensing is not ours to grant; keep them out of a public
+# repository deliberately rather than by accident.
+*.ifc
+dataset/
+results/
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.DS_Store

@@ -1,0 +1,86 @@
+# Publish the annotator to GitHub Pages.
+#
+# Adapted from nbharathik/ifc-viewx's deploy-pages.yml, with its npm/Vite and
+# MkDocs steps dropped: this app has no build step and no dependencies, so
+# assembling the site is a copy plus a generated index. Python is here only to
+# run `annotator/build_site.py`.
+#
+# The floor plans are committed under `annotator/data/` (about 1.1 MB) rather
+# than extracted here, because extracting them needs the 2 GB IFC corpus and
+# IfcOpenShell. Re-run `main/export_plans.py` locally and commit the result when
+# the plans change.
+#
+# Before the first run: Settings > Pages > Source = "GitHub Actions".
+
+name: Deploy annotator to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "annotator/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The browser build and the collection script each compose the building
+      # graph, in JavaScript and in Python. If they ever disagree, an annotator
+      # signs off on one graph and the dataset receives another -- so the deploy
+      # fails rather than shipping that.
+      - name: Check compose.js and compose.py agree
+        run: python annotator/test_compose_parity.py
+
+      # Serves the built site from a subdirectory, as a project Pages site is
+      # served, and drives store.js under node. Catches the absolute-path and
+      # missing-manifest failures, which are invisible until after publishing.
+      - name: Check the static build works from a subpath
+        run: python annotator/test_static_build.py
+
+      # The dataset-folder backend writes into the annotator's own filesystem.
+      # A truncated annotation file loses a day's work and leaves no trace, so
+      # the write path (including two saves racing) is checked here.
+      - name: Check the dataset-folder backend
+        run: python annotator/test_dir_mode.py
+
+      - name: Build static site
+        run: python annotator/build_site.py --out dist
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
