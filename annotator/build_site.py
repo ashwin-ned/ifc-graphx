@@ -11,7 +11,9 @@ What the static build differs in, and only this:
     instead of POSTing to a server that is not there.
   * `manifest.json` replaces the `/api/models` route, which cannot exist
     without a server. It is the list of plans the site ships with.
-  * The plans are copied in as static assets under `data/`.
+  * The plans are copied in as static assets under `data/`, along with any
+    IFC file sitting beside them -- that is what lets someone using the hosted
+    site open the 3D view, which otherwise needs a folder on their own disk.
 
     python annotator/build_site.py --out dist
     python -m http.server -d dist 8080      # to check it before pushing
@@ -36,7 +38,7 @@ ASSETS = ["index.html", "style.css", "app.js", "compose.js", "store.js",
           "fsdir.js", "viewer3d.js"]
 
 
-def build(out: str, quiet: bool = False) -> int:
+def build(out: str, quiet: bool = False, with_ifc: bool = True) -> int:
     plans = sorted(glob.glob(os.path.join(DATA, "*.plan.json")))
     if not plans:
         print("!! no plans in annotator/data — nothing to publish")
@@ -64,7 +66,7 @@ def build(out: str, quiet: bool = False) -> int:
             " */\n"
             'window.BIMSG_CONFIG = { mode: "local" };\n')
 
-    models = []
+    models, ifc_bytes = [], 0
     for p in plans:
         name = os.path.basename(p).replace(".plan.json", "")
         with open(p) as fh:
@@ -73,10 +75,23 @@ def build(out: str, quiet: bool = False) -> int:
         n_rooms = sum(len(s["rooms"]) for s in doc["storeys"])
         n_edges = sum(len(s["edges"]) for s in doc["storeys"])
         n_vert = len(doc.get("vertical") or [])
+
+        # The IFC is optional and large. Publishing it is what makes the 3D
+        # check available to someone working from the hosted site rather than
+        # from a folder on their own disk; its size goes into the manifest so
+        # the page can warn before pulling 29 MB over a phone connection.
+        src_ifc = os.path.join(DATA, f"{name}.ifc")
+        size = 0
+        if with_ifc and os.path.exists(src_ifc):
+            shutil.copy2(src_ifc, os.path.join(out, "data", f"{name}.ifc"))
+            size = os.path.getsize(src_ifc)
+            ifc_bytes += size
+
         models.append({
             "model": name, "storeys": len(doc["storeys"]),
             "rooms": n_rooms, "edges": n_edges, "vertical": n_vert,
             "items": n_rooms + n_edges + n_vert,
+            "hasIfc": size > 0, "ifcBytes": size,
         })
 
     with open(os.path.join(out, "manifest.json"), "w") as fh:
@@ -101,7 +116,13 @@ def build(out: str, quiet: bool = False) -> int:
         print(f"  {len(models)} plans, "
               f"{sum(m['rooms'] for m in models)} rooms, "
               f"{sum(m['items'] for m in models)} judgeable items")
+        n_ifc = sum(1 for m in models if m["hasIfc"])
+        print(f"  {n_ifc} IFC file(s) published ({ifc_bytes / 1e6:.0f} MB)"
+              if n_ifc else "  no IFC files (the 3D view will be unavailable)")
         print(f"  {size / 1e6:.2f} MB total")
+        if size > 900e6:
+            print("  !! over 900 MB — GitHub Pages refuses to publish a site "
+                  "larger than 1 GB")
         print(f"\n  preview:  python -m http.server -d {out} 8080")
     return 0
 
@@ -111,8 +132,10 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default="dist")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--no-ifc", action="store_true",
+                    help="leave the IFC files out; the 3D view needs them")
     args = ap.parse_args()
-    return build(args.out, args.quiet)
+    return build(args.out, args.quiet, with_ifc=not args.no_ifc)
 
 
 if __name__ == "__main__":

@@ -93,9 +93,16 @@ python annotator/test_dir_mode.py
 
 ## Data
 
-`annotator/data/*.plan.json` are floor plans (room polygons, wall footprints,
-door positions and any room names the file stated) extracted from IFC models.
-The IFC files themselves are not in this repository.
+`annotator/data/` holds 25 buildings, each as a `*.plan.json` floor plan (room
+polygons, wall footprints, door positions and any room names the file stated)
+and the `*.ifc` model it was extracted from. The IFC files are published so the
+3D check works from the hosted site and not only from a folder on disk; their
+headers were anonymised upstream (`FILE_NAME` carries `Organization_0`,
+`Redacted`) and carry no author or organisation.
+
+They are 247 MB, which is why `build_site.py --no-ifc` exists: it publishes the
+plans alone, leaving the 3D view available only to annotators working from their
+own folder.
 
 ## Acknowledgements
 

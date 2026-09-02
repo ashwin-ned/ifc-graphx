@@ -115,6 +115,23 @@ const after = await fresh.getAnnotation(name, "tester");
 ok("re-imported work is intact",
    Object.keys(after.rooms).length === Object.keys(a.rooms).length);
 
+/* The 3D view on a hosted site depends on the IFC being published beside the
+ * plan and the manifest saying so. When this build has one, prove it is
+ * actually reachable rather than merely flagged. */
+const withIfc = (await fresh.listModels()).filter((m) => m.hasIfc);
+if (withIfc.length) {
+  const n = withIfc[0].model;
+  ok(`manifest flags ${n} as having an IFC`, fresh.hasIfc(n));
+  ok("manifest carries the download size", fresh.ifcBytes(n) > 0);
+  const blob = await fresh.getIfcFile(n);
+  ok(`IFC downloads over http (${blob.size} bytes)`, blob.size > 0);
+  const head = (await blob.text()).slice(0, 13);
+  ok("downloaded bytes are an IFC file", head === "ISO-10303-21;");
+} else {
+  ok("no IFC in this build, so nothing claims to have one",
+     !(await fresh.listModels()).some((m) => m.hasIfc));
+}
+
 process.exit(failures ? 1 : 0);
 """
 
@@ -131,10 +148,38 @@ def main():
         print(f"node not found (tried {NODE!r}); set NODE_BIN to your node binary")
         return 2
 
+    rc = run_once(with_ifc=False)
+    if rc:
+        return rc
+    # And again with an IFC present, so the publish-the-model path is covered.
+    # A stub file stands in for the real corpus: copying 257 MB to prove the
+    # wiring works would slow every CI run for no extra confidence.
+    return run_once(with_ifc=True)
+
+
+def run_once(with_ifc: bool) -> int:
+    print(f"\n--- build {'with' if with_ifc else 'without'} IFC files ---")
     with tempfile.TemporaryDirectory() as td:
         site = os.path.join(td, "site")
-        if build(site, quiet=True) != 0:
+        if build(site, quiet=True, with_ifc=with_ifc) != 0:
             return 1
+        if with_ifc:
+            import glob as _glob
+            first = sorted(_glob.glob(os.path.join(site, "data", "*.plan.json")))[0]
+            name = os.path.basename(first)[:-len(".plan.json")]
+            stub = os.path.join(site, "data", f"{name}.ifc")
+            with open(stub, "w") as fh:
+                fh.write("ISO-10303-21;\nHEADER;\nENDSEC;\nDATA;\nENDSEC;\n"
+                         "END-ISO-10303-21;\n")
+            mpath = os.path.join(site, "manifest.json")
+            with open(mpath) as fh:
+                man = json.load(fh)
+            for m in man["models"]:
+                if m["model"] == name:
+                    m["hasIfc"] = True
+                    m["ifcBytes"] = os.path.getsize(stub)
+            with open(mpath, "w") as fh:
+                json.dump(man, fh)
 
         # Serve it one level down, exactly as a project Pages site is served.
         root = os.path.join(td, "root")
@@ -172,8 +217,6 @@ def main():
                 return 1
 
             httpd.shutdown()
-
-    print("\nPASS the static build works when served from a subpath")
     return 0
 
 

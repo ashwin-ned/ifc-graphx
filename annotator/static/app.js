@@ -1133,14 +1133,21 @@ function can3d() {
   return S.store && typeof S.store.hasIfc === "function" && S.store.hasIfc(S.model);
 }
 
+/** "29 MB" for a published IFC, so the cost is visible before clicking. */
+function ifcSizeLabel() {
+  if (!S.store || typeof S.store.ifcBytes !== "function") return "";
+  const b = S.store.ifcBytes(S.model);
+  return b ? `${(b / 1e6).toFixed(0)} MB` : "";
+}
+
 function on3dModelChanged() {
   const t = $("tab3d");
   const has = can3d();
   t.disabled = !has;
-  $("tabNote").textContent = has ? "" :
+  $("tabNote").textContent = has ? ifcSizeLabel() :
     (S.store && S.store.mode === "dir"
       ? "no IFC file for this model in the folder"
-      : "open a dataset folder to view the IFC");
+      : "no IFC published for this model");
   if (S.view3dOn && !has) show2d();
   else if (S.view3dOn) load3d();
 }
@@ -1173,7 +1180,8 @@ async function load3d() {
     note.innerHTML = esc(t);
   };
   try {
-    say("loading 3D libraries…");
+    const sz = ifcSizeLabel();
+    say(sz ? `downloading the IFC (${sz})…` : "loading 3D libraries…");
     if (!S.viewer) S.viewer = new BIMSGViewer.Viewer($("canvas3d"));
     const file = await S.store.getIfcFile(S.model);
     const info = await S.viewer.load(file, say);

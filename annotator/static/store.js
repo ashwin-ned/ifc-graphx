@@ -108,6 +108,26 @@
       return p;
     }
 
+    _entry(name) {
+      return this.manifest.models.find((m) => m.model === name) || {};
+    }
+
+    /** Whether this deployment published the IFC beside the plan. */
+    hasIfc(name) { return !!this._entry(name).hasIfc; }
+
+    /** Bytes, so the page can warn before pulling tens of megabytes. */
+    ifcBytes(name) { return this._entry(name).ifcBytes || 0; }
+
+    /* Fetched fresh each time rather than cached: these are up to 30 MB and
+     * holding several in memory is a worse failure than re-downloading one. */
+    async getIfcFile(name) {
+      if (!this.hasIfc(name))
+        throw new Error(`no IFC published for ${name}`);
+      const r = await fetch(`data/${name}.ifc`);
+      if (!r.ok) throw new Error(`could not download ${name}.ifc (${r.status})`);
+      return r.blob();
+    }
+
     async getAnnotation(model, who) {
       const raw = localStorage.getItem(kAnno(model, who));
       if (!raw) {

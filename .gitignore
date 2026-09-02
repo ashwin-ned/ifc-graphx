@@ -6,10 +6,11 @@ annotator/annotations/*.json
 # Built by annotator/build_site.py, and by the Pages workflow on every push.
 dist/
 
-# The IFC corpus and everything derived from it beyond the plans. These are
-# large and their licensing is not ours to grant; keep them out of a public
-# repository deliberately rather than by accident.
+# IFC files are kept out by default -- they are large and easy to add by
+# accident. The 25 published with the annotator are the deliberate exception:
+# without them the hosted 3D view has nothing to show.
 *.ifc
+!annotator/data/*.ifc
 dataset/
 results/
 
