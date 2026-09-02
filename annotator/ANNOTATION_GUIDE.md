@@ -43,7 +43,8 @@ If you were sent a folder containing `.ifc` files and `.plan.json` files:
 
 1. Open the tool in **Chrome or Edge** (this part does not work in Firefox or
    Safari).
-2. Press **Open dataset folder…** at the bottom left and pick that folder.
+2. Press **Open dataset folder…** — it is the first thing in the left-hand
+   panel, above the model list — and pick that folder.
 3. Allow the browser to edit files in it when it asks.
 
 Now your work is written straight back into that folder, into a file called
@@ -63,8 +64,9 @@ to another machine.
 
 So there is one extra step, and it is the one that actually delivers your work:
 
-> When you finish a session, press **Download all my work** in the bottom left
-> and send the downloaded file to whoever asked you to do this.
+> When you finish a session, press **Download all my work** — near the bottom
+> of the left-hand panel, under Save — and send that file to whoever asked
+> you to do this.
 
 The sidebar tells you what has not been downloaded yet. Do it at the end of
 every session, not just at the very end of the job — a downloaded file is safe,
@@ -98,8 +100,9 @@ losing your place in either.
 Drag to orbit, right-drag (or shift-drag) to pan, scroll to zoom — the zoom
 goes toward your cursor, so point at a room and scroll to get into it.
 **Double-click anything to centre on it**, which is the quickest way to inspect
-one corner. **Fit** reframes the whole building; **Top** looks straight down,
-which is the view to compare against the plan.
+one corner. **Rooms** frames the floor you are annotating, which is where the view starts;
+**Fit** pulls back to the whole model including the site around it; **Top**
+looks straight down, which is the view to compare against the plan.
 
 ### Slicing through the floors
 

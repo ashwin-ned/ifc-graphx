@@ -211,7 +211,12 @@
       this.scene.background = new THREE.Color(0xeef1f6);
       this.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 5000);
 
-      this.renderer = new THREE.WebGLRenderer({ antialias: true });
+      // preserveDrawingBuffer keeps the canvas readable after compositing.
+      // Without it the browser clears it, so anything that reads the pixels --
+      // a screenshot, or the browser test asserting the view is not blank --
+      // sees an empty frame regardless of what was drawn.
+      this.renderer = new THREE.WebGLRenderer({
+        antialias: true, preserveDrawingBuffer: true });
       this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       this.renderer.setSize(w, h);
       this.renderer.localClippingEnabled = true;
@@ -264,7 +269,16 @@
       onProgress && onProgress("reading file…");
       const buf = new Uint8Array(await file.arrayBuffer());
       onProgress && onProgress("parsing IFC…");
-      this.modelID = ifcApi.OpenModel(buf, { COORDINATE_TO_ORIGIN: true });
+      /* COORDINATE_TO_ORIGIN is deliberately off. It recentres the model by an
+       * amount we are not told, and the plan keeps the original IFC
+       * coordinates -- measured on model_0, that left world.x = plan.x + 16.17
+       * and world.z = -plan.y - 18.01, so framing on the rooms aimed at bare
+       * ground beside the building. Recentring here instead keeps the mapping
+       * exact and known.
+       *
+       * web-ifc still converts to Y-up, so IFC (x, y, z) arrives as
+       * (x, z, -y) and an elevation is a world Y. */
+      this.modelID = ifcApi.OpenModel(buf, {});
 
       onProgress && onProgress("building geometry…");
       const byColour = new Map();
@@ -333,6 +347,18 @@
         m.frustumCulled = false;      // one mesh spans the whole building
         this.root.add(m);
         this.meshes.push(m);
+      }
+
+      /* Recentre horizontally only. Large site coordinates cost float
+       * precision, but shifting Y as well would break the section planes,
+       * which are stated as real elevations. */
+      this.offset = { x: 0, z: 0 };
+      const raw = this._worldBox();
+      if (raw) {
+        const c = raw.getCenter(new THREE.Vector3());
+        this.offset = { x: -c.x, z: -c.z };
+        this.root.position.set(this.offset.x, 0, this.offset.z);
+        this.scene.updateMatrixWorld(true);
       }
 
       this.storeys = this._readStoreys();
@@ -441,6 +467,80 @@
       this.controls.apply(true);
     }
 
+    /* Frame on the rooms rather than the whole model.
+     *
+     * A model is mostly site: model_0 spans 116 x 83 m of which the building is
+     * a small part, so fitting the bounding box leaves the thing being
+     * annotated as a speck among trees and parked cars. The plan knows where
+     * the rooms are, in IFC plan coordinates.
+     *
+     * web-ifc emits Y-up with IFC x -> x and IFC y -> -z (its Y carries the
+     * elevation, measured). `hitsGeometry` checks that assumption against the
+     * model instead of trusting it: if the mapping were wrong the camera would
+     * aim at bare ground and the ray would miss.
+     */
+    frameOnFootprint(fp) {
+      if (!fp || !this.meshes.length) return false;
+      const off = this.offset || { x: 0, z: 0 };
+      const cx = (fp.minX + fp.maxX) / 2 + off.x;
+      const cz = -(fp.minY + fp.maxY) / 2 + off.z;
+      const w = Math.max(fp.maxX - fp.minX, fp.maxY - fp.minY, 4);
+      const yb = this.bounds || { min: 0, max: 10 };
+      const cy = (yb.min + yb.max) / 2;
+      const target = new THREE.Vector3(cx, cy, cz);
+
+      const r = Math.max(w, (yb.max - yb.min) || 4);
+      this.controls._goalT.copy(target);
+      this.controls._goalS.set(
+        r / Math.tan((this.camera.fov / 2) * Math.PI / 180), Math.PI / 3.2, Math.PI / 4);
+      this.controls.minDistance = Math.max(r / 5000, 0.01);
+      this.controls.maxDistance = r * 40;
+
+      /* Then solve for the distance rather than guess a margin.
+       *
+       * The view is oblique and the footprint is rarely square, so the corner
+       * that ends up furthest from centre depends on the building. Projecting
+       * the eight box corners and backing off until they all sit inside the
+       * frame works for any shape, and needs no constant that is right for one
+       * model and wrong for the next.
+       */
+      const corners = [];
+      for (const x of [fp.minX, fp.maxX])
+        for (const y of [fp.minY, fp.maxY])
+          for (const z of [yb.min, yb.max])
+            corners.push(new THREE.Vector3(x + off.x, z, -y + off.z));
+
+      const MARGIN = 0.88;          // leave a little air around the building
+      for (let i = 0; i < 8; i++) {
+        this.controls.apply(true);
+        this.camera.updateMatrixWorld(true);
+        this.camera.updateProjectionMatrix();
+        let worst = 0;
+        for (const c of corners) {
+          const p = c.clone().project(this.camera);
+          worst = Math.max(worst, Math.abs(p.x), Math.abs(p.y));
+        }
+        if (!Number.isFinite(worst) || worst <= MARGIN) break;
+        this.controls._goalS.radius *= Math.min(2.5, (worst / MARGIN) * 1.02);
+      }
+      return true;
+    }
+
+    /** Where a plan coordinate (IFC x, y at elevation z) lands in the scene. */
+    planToWorld(x, y, elevation) {
+      const off = this.offset || { x: 0, z: 0 };
+      return new THREE.Vector3(x + off.x, elevation, -y + off.z);
+    }
+
+    /** Does a ray from the camera to its target actually meet the model? */
+    hitsGeometry() {
+      if (!this.meshes.length) return false;
+      const dir = new THREE.Vector3()
+        .subVectors(this.controls.target, this.camera.position).normalize();
+      this._ray.set(this.camera.position, dir);
+      return this._ray.intersectObjects(this.meshes, false).length > 0;
+    }
+
     /** Look straight down, to compare against the floor plan. */
     topView() {
       this.controls._goalS.phi = 0.02;
@@ -466,6 +566,8 @@
       this.meshes = [];
       this.storeys = [];
       this.bounds = null;
+      this.offset = { x: 0, z: 0 };
+      if (this.root) this.root.position.set(0, 0, 0);
       if (this.modelID !== null && ifcApi) {
         try { ifcApi.CloseModel(this.modelID); } catch (e) { /* already gone */ }
         this.modelID = null;

@@ -19,3 +19,7 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+
+# Only ever present when CI installs playwright for the browser test.
+node_modules/
+package-lock.json

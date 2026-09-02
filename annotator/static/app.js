@@ -344,12 +344,24 @@ function render() {
     const byId = Object.fromEntries(st.rooms.map((r) => [r.id, r]));
     const draw = (a, b, cls, onclick) => {
       if (!byId[a] || !byId[b]) return;
-      const e = document.createElementNS(SVGNS, "line");
-      e.setAttribute("x1", byId[a].centroid[0]); e.setAttribute("y1", byId[a].centroid[1]);
-      e.setAttribute("x2", byId[b].centroid[0]); e.setAttribute("y2", byId[b].centroid[1]);
-      e.setAttribute("class", cls);
-      e.onclick = (ev) => { ev.stopPropagation(); onclick(); };
-      G.edges.appendChild(e);
+      const line = (klass) => {
+        const e = document.createElementNS(SVGNS, "line");
+        e.setAttribute("x1", byId[a].centroid[0]);
+        e.setAttribute("y1", byId[a].centroid[1]);
+        e.setAttribute("x2", byId[b].centroid[0]);
+        e.setAttribute("y2", byId[b].centroid[1]);
+        e.setAttribute("class", klass);
+        return e;
+      };
+      // A link is drawn as a hairline, which is honest but painful to hit --
+      // and link verdicts are the most valuable thing here. So the click goes
+      // to a wider transparent line underneath, and the visible one is inert.
+      const hit = line("edge-hit");
+      hit.onclick = (ev) => { ev.stopPropagation(); onclick(); };
+      G.edges.appendChild(hit);
+      const vis = line(cls);
+      vis.setAttribute("pointer-events", "none");
+      G.edges.appendChild(vis);
     };
     for (const ed of st.edges) {
       const k = edgeKey(ed.a, ed.b);
@@ -848,7 +860,15 @@ window.addEventListener("mouseup", (e) => {
       });
     });
   } else if (drag && !drag.moved && S.mode === "select") {
-    S.sel = null; render();
+    // Only a click on empty canvas deselects.
+    //
+    // This used to fire for every click. `render()` rebuilds the plan, so the
+    // polygon that received the mousedown was destroyed before the browser
+    // could deliver the `click` to it -- the room's own handler never ran and
+    // selecting a room silently did nothing. Events go mousedown, mouseup,
+    // click, so anything that re-creates the DOM on mouseup eats the click.
+    const t = e.target;
+    if (t === svg || (t && t.id === "viewport")) { S.sel = null; render(); }
   }
   drag = null; svg.classList.remove("panning");
 });
@@ -1216,6 +1236,7 @@ async function load3d() {
       S.viewer.resize();
       setupSection();
       syncSectionToFloor();
+      frameRooms();          // open on the building, not the car park
       say(null);
       banner(`IFC loaded — ${info.storeys} storeys` +
              (info.skipped ? `, ${info.skipped} unreadable solids skipped` : ""));
@@ -1321,10 +1342,39 @@ function syncSectionToFloor() {
     (bestD > 0.6 ? ` (nearest to ${want} m)` : "");
 }
 
+/** The rooms of the storey being annotated, in IFC plan coordinates. */
+function roomFootprint() {
+  if (!S.plan) return null;
+  const st = S.plan.storeys[S.storey];
+  const rs = (st && st.rooms.length) ? st.rooms
+    : S.plan.storeys.reduce((a, x) => a.concat(x.rooms), []);
+  if (!rs.length) return null;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const r of rs) for (const [x, y] of r.polygon) {
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+  }
+  return Number.isFinite(minX) ? { minX, maxX, minY, maxY } : null;
+}
+
+/** Frame the building rather than the site it stands on. */
+function frameRooms() {
+  if (!S.viewer || !S.viewer.meshes.length) return;
+  const fp = roomFootprint();
+  if (!fp || !S.viewer.frameOnFootprint(fp)) { S.viewer.fit(); return; }
+  // If the rooms and the model disagree about where the building is, the ray
+  // to the target misses everything -- fall back rather than stare at soil.
+  if (!S.viewer.hitsGeometry()) {
+    console.warn("room footprint did not line up with the model; framing all of it");
+    S.viewer.fit();
+  }
+}
+
 function wireViewer() {
   $("tab2d").onclick = () => setView("plan");
   $("tabSplit").onclick = () => setView("split");
   $("tab3d").onclick = () => setView("model");
+  $("btnRooms3d").onclick = frameRooms;
   $("btnFit3d").onclick = () => S.viewer && S.viewer.fit();
   $("btnTop3d").onclick = () => S.viewer && S.viewer.topView();
 
@@ -1434,6 +1484,21 @@ window.addEventListener("resize", () => {
   if (S.plan) fit();
   if (S.viewer) S.viewer.resize();
 });
+
+/* A window handle on the app's internals.
+ *
+ * app.js is a classic script, so its top-level bindings are script-scoped and
+ * invisible from outside. The browser test suite needs to assert things the DOM
+ * does not show -- that the camera is at a finite distance, that the section
+ * planes are horizontal -- and it is the same handle worth having when
+ * debugging a report from an annotator ("what does the tool think is loaded?").
+ */
+window.BIMSGApp = {
+  get state() { return S; },
+  get viewer() { return S.viewer; },
+  setView, cycleView, applySection, syncSectionToFloor, sectionRange, can3d,
+  frameRooms, roomFootprint,
+};
 
 (async function init() {
   try {

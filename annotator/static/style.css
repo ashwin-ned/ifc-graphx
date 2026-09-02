@@ -167,8 +167,10 @@ svg.picking{cursor:crosshair}
 .room.v-merge{stroke:var(--v-merge);stroke-width:.13}
 .room.v-split{stroke:var(--v-split);stroke-width:.13}
 
-.edge{stroke-width:.10;cursor:pointer;fill:none}
-.edge:hover{stroke-width:.2}
+.edge{stroke-width:.10;fill:none}
+/* The wide invisible twin that actually takes the click. */
+.edge-hit{stroke:transparent;stroke-width:.45;fill:none;cursor:pointer}
+.edge-hit:hover + .edge{stroke-width:.22}
 .edge.connected_by_door{stroke:var(--r-door)}
 .edge.open_passage{stroke:var(--r-passage);stroke-dasharray:.34 .2}
 .edge.vertically_connected{stroke:var(--r-vertical);stroke-dasharray:.1 .16}

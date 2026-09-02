@@ -96,10 +96,22 @@ published site works from a project subpath and that the folder backend cannot
 truncate an annotation file.
 
 ```bash
-python annotator/test_compose_parity.py
-python annotator/test_static_build.py
-python annotator/test_dir_mode.py
+python annotator/test_compose_parity.py   # the two composers agree
+python annotator/test_static_build.py     # the published site works from /<repo>/
+python annotator/test_dir_mode.py         # folder mode saves and restores
+python annotator/test_viewer_deps.py      # CDN modules resolve; controls behave
+python annotator/test_e2e.py              # the whole app, in a real browser
 ```
+
+`test_e2e.py` is the one that matters. This is a browser application, and every
+regression it has shipped -- a name collision in the state object, a block of
+code removed by an over-wide edit, a section cutting the wrong axis, a control
+that quietly stopped being wired -- was invisible to module tests and obvious
+the moment someone opened the page. It loads the built site in Chromium and
+clicks through: judging a room, undo and redo, adding and deleting a link,
+switching storeys and layouts, loading the IFC, and checking that the canvas is
+not blank and the section planes are horizontal. Run it before pushing anything
+under `static/`.
 
 ## Data
 

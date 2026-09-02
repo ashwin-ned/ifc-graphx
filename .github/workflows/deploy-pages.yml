@@ -71,6 +71,21 @@ jobs:
       - name: Check the 3D viewer's dependencies
         run: python annotator/test_viewer_deps.py
 
+      # The one that matters. Every regression this tool shipped -- a name
+      # collision in the state object, a block removed by an over-wide edit, a
+      # section on the wrong axis, a control that stopped being wired -- was
+      # invisible to the suites above and obvious the moment someone loaded the
+      # page. This loads it in Chromium and clicks through. It skips if the
+      # browser is unavailable rather than blocking the deploy.
+      - name: Drive the annotator in a real browser
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          python annotator/test_e2e.py
+        env:
+          # The suite drives node's playwright, not the Python package.
+          PLAYWRIGHT_DIR: ${{ github.workspace }}/node_modules/playwright
+
       - name: Build static site
         run: python annotator/build_site.py --out dist
 
