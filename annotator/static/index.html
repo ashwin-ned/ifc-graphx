@@ -137,17 +137,26 @@
     <div class="pane pane3d" id="view3d" hidden>
       <div id="canvas3d" class="canvas3d"></div>
       <div class="cutbar" id="cutbar">
-        <label class="chk" title="Section follows the floor you are annotating">
-          <input type="checkbox" id="cutFollow" checked> follow floor
-        </label>
-        <label class="chk" title="Show only the selected floor, not everything below">
-          <input type="checkbox" id="cutSlab" checked> single floor
-        </label>
-        <input id="cutSlider" type="range" min="0" max="1000" value="1000"
-               title="Slice the model vertically">
-        <b id="cutVal">off</b>
-        <button id="btnTop3d" class="hbtn" title="Look straight down">Top</button>
-        <button id="btnFit3d" class="hbtn" title="Frame the whole model">Fit</button>
+        <div class="cutrow">
+          <span class="cutlabel">Section</span>
+          <div class="slidewrap">
+            <div class="cutticks" id="cutTicks"></div>
+            <input id="cutSlider" type="range" min="0" max="1000" value="1000"
+                   title="Slice the model vertically">
+          </div>
+          <b id="cutVal">whole building</b>
+        </div>
+        <div class="cutrow">
+          <label class="chk" title="The section follows the floor you are annotating">
+            <input type="checkbox" id="cutFollow" checked> follow floor
+          </label>
+          <label class="chk" title="Show only that floor, not everything below it">
+            <input type="checkbox" id="cutSlab" checked> single floor
+          </label>
+          <span class="spacer"></span>
+          <button id="btnTop3d" class="hbtn" title="Look straight down">Top</button>
+          <button id="btnFit3d" class="hbtn" title="Frame the whole model">Fit</button>
+        </div>
       </div>
       <div id="load3d" class="loading3d"></div>
       <div class="hud3d" id="hud3d">drag to orbit &middot; right-drag to pan &middot;

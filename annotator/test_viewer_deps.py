@@ -24,6 +24,7 @@ depend on it at build time.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -36,6 +37,49 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 VIEWER = os.path.join(HERE, "static", "viewer3d.js")
 NODE = os.environ.get("NODE_BIN") or "node"
 TIMEOUT = 45
+WEBIFC_NODE = "https://cdn.jsdelivr.net/npm/web-ifc@0.0.77/"
+
+AXIS_TEST = r"""
+import fs from "node:fs/promises";
+const WebIFC = await import(process.argv[2] + "/web-ifc-api-node.js");
+const api = new WebIFC.IfcAPI();
+api.SetWasmPath(process.argv[2] + "/", true);
+await api.Init();
+const id = api.OpenModel(new Uint8Array(await fs.readFile(process.argv[3])),
+                         { COORDINATE_TO_ORIGIN: true });
+const mn = [1e30, 1e30, 1e30], mx = [-1e30, -1e30, -1e30];
+api.StreamAllMeshes(id, (mesh) => {
+  const pl = mesh.geometries;
+  for (let i = 0; i < pl.size(); i++) {
+    const pg = pl.get(i);
+    const g = api.GetGeometry(id, pg.geometryExpressID);
+    const v = api.GetVertexArray(g.GetVertexData(), g.GetVertexDataSize());
+    const t = pg.flatTransformation;
+    for (let k = 0; k < v.length; k += 6) {
+      const x = v[k], y = v[k + 1], z = v[k + 2];
+      const p = [t[0]*x + t[4]*y + t[8]*z + t[12],
+                 t[1]*x + t[5]*y + t[9]*z + t[13],
+                 t[2]*x + t[6]*y + t[10]*z + t[14]];
+      for (let a = 0; a < 3; a++) {
+        if (p[a] < mn[a]) mn[a] = p[a];
+        if (p[a] > mx[a]) mx[a] = p[a];
+      }
+    }
+    g.delete();
+  }
+});
+const ids = api.GetLineIDsWithType(id, WebIFC.IFCBUILDINGSTOREY);
+const el = [];
+for (let i = 0; i < ids.size(); i++) {
+  const s = api.GetLine(id, ids.get(i));
+  el.push(s.Elevation ? Number(s.Elevation.value) : 0);
+}
+api.CloseModel(id);
+// web-ifc logs its "No basis found for brep" warnings on stdout, so the result
+// goes to a file rather than being fished out of that.
+await fs.writeFile(process.argv[4],
+                   JSON.stringify({ min: mn, max: mx, elevations: el }));
+"""
 
 # A specifier a browser can follow without an import map.
 RESOLVABLE = re.compile(r'^(\.{1,2}/|/|https?://)')
@@ -159,17 +203,23 @@ ok("the merged box is the real one", Math.abs(merged.boundingBox.max.x - 1) < 1e
 ok("merging only empties yields null", H.mergeGeometries([empty]) === null);
 
 /* --- section planes ---------------------------------------------------- */
-const grp = new THREE.Group();
-grp.rotation.x = -Math.PI / 2;
-grp.updateMatrixWorld(true);
-const w = new THREE.Vector3(3, 7, 4.5).applyMatrix4(grp.matrixWorld);
-ok("an IFC elevation becomes a world Y", Math.abs(w.y - 4.5) < 1e-6);
+/* The earlier version of this block rotated a group by -PI/2 about X and
+ * asserted that an IFC z became a world Y. It passed, and it was wrong: it
+ * verified the assumption rather than the library. web-ifc already emits Y-up,
+ * so that rotation put the vertical axis into Z and the section sliced the
+ * building sideways. The axis convention is now asserted against a real model
+ * in Python (see check_axis_convention), and what is checked here is only that
+ * the planes isolate the slab they claim to. */
+ok("the viewer applies no rotation of its own to web-ifc output",
+   !/rotation\.x\s*=/.test(src));
 const top = new THREE.Plane(new THREE.Vector3(0, -1, 0), 6);
 const bot = new THREE.Plane(new THREE.Vector3(0, 1, 0), -3);
 const inside = (v) => top.distanceToPoint(v) > 0 && bot.distanceToPoint(v) > 0;
-ok("a point at 4.5 m is inside a 3-6 m slab", inside(w));
+ok("a point at 4.5 m is inside a 3-6 m slab", inside(new THREE.Vector3(3, 4.5, 7)));
 ok("a point at 1 m is below it", !inside(new THREE.Vector3(0, 1, 0)));
 ok("a point at 8 m is above it", !inside(new THREE.Vector3(0, 8, 0)));
+ok("the slab ignores horizontal position",
+   inside(new THREE.Vector3(-500, 4.5, 900)));
 
 process.exit(bad ? 1 : 0);
 """
@@ -219,6 +269,79 @@ def check_module(url: str) -> list:
     """Bare specifiers in a module a browser is asked to import directly."""
     text = fetch(url).decode("utf8", "replace")
     return sorted({s for s in module_specifiers(text) if not RESOLVABLE.match(s)})
+
+
+def check_axis_convention(td: str) -> int:
+    """Assert which axis web-ifc puts the building's height on, using a real model.
+
+    This is the check that was missing. The JS suite asserted that a -PI/2
+    rotation about X turns an IFC z into a world Y -- true, self-consistent, and
+    beside the point, because web-ifc has *already* converted to Y-up. Rotating
+    again sent the vertical into Z and the section slider cut the building
+    sideways. Testing an assumption proves nothing about the library; this asks
+    the library.
+
+    The building's height is known independently, from the storey elevations.
+    Whichever axis spans closest to that height is the vertical one, and it must
+    be Y.
+    """
+    model = os.path.join(HERE, "data", "model_0.ifc")
+    if not os.path.exists(model):
+        print("\n  SKIP no IFC in annotator/data to check the axis convention")
+        return 0
+
+    print("\naxis convention, against a real model:")
+    lib = os.path.join(td, "webifc")
+    os.makedirs(lib, exist_ok=True)
+    try:
+        for f in ("web-ifc-api-node.js", "web-ifc-node.wasm"):
+            with open(os.path.join(lib, f), "wb") as fh:
+                fh.write(fetch(WEBIFC_NODE + f))
+    except Exception as e:
+        print(f"  SKIP could not fetch web-ifc's node build ({e})")
+        return 0
+
+    drv = os.path.join(td, "axis.mjs")
+    with open(drv, "w") as fh:
+        fh.write(AXIS_TEST)
+    out = os.path.join(td, "axis.json")
+    r = subprocess.run([NODE, drv, lib, model, out], capture_output=True, text=True)
+    if r.returncode != 0 or not os.path.exists(out):
+        print("  FAIL could not read the model")
+        print((r.stderr or r.stdout).strip()[-800:])
+        return 1
+
+    with open(out) as fh:
+        d = json.load(fh)
+    spans = [d["max"][i] - d["min"][i] for i in range(3)]
+    el = sorted(d["elevations"])
+    if not el:
+        print("  SKIP the model states no storeys")
+        return 0
+    # Storeys give the height from the lowest floor to the top one, plus one
+    # more storey of headroom for the roof above the highest slab.
+    storey_h = (el[-1] - el[0]) / max(1, len(el) - 1) if len(el) > 1 else 3.2
+    expect = (el[-1] - el[0]) + storey_h
+    vertical = min(range(3), key=lambda i: abs(spans[i] - expect))
+
+    names = "XYZ"
+    print(f"  spans  X {spans[0]:.1f}  Y {spans[1]:.1f}  Z {spans[2]:.1f} m")
+    print(f"  storeys {', '.join(f'{e:.1f}' for e in el)} -> expect a height "
+          f"near {expect:.1f} m")
+    if vertical != 1:
+        print(f"  FAIL web-ifc puts the height on {names[vertical]}, not Y — the "
+              f"viewer's section planes are on world Y and would slice sideways")
+        return 1
+    print(f"  PASS the height is on Y ({spans[1]:.1f} m), which is where the "
+          f"section planes cut")
+    lo, hi = d["min"][1], d["max"][1]
+    if not (lo - 1.5 <= el[0] and el[-1] <= hi + 1.5):
+        print(f"  FAIL storey elevations {el[0]:.1f}..{el[-1]:.1f} fall outside "
+              f"the Y extent {lo:.1f}..{hi:.1f}")
+        return 1
+    print(f"  PASS every storey elevation lies inside the Y extent "
+          f"({lo:.1f}..{hi:.1f} m)")
+    return 0
 
 
 def main():
@@ -289,6 +412,9 @@ def main():
         print(r.stdout.rstrip())
         if r.returncode != 0:
             print(r.stderr.rstrip()[:2000])
+            return 1
+
+        if check_axis_convention(td):
             return 1
 
     print("\nPASS the viewer's dependencies resolve and its controls behave")

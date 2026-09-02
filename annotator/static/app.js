@@ -31,7 +31,7 @@ const S = {
   vertFrom: null,            // {id,label,storey,storeyName} pending cross-floor link
   dirty: false, store: null,
   models: [], viewer: null,
-  view: "plan", splitPct: 55, followFloor: true,
+  layout: "plan", splitPct: 55, followFloor: true,
   history: [], future: [],
   view: { x: 0, y: 0, k: 30 },
 };
@@ -1127,6 +1127,243 @@ async function offerReconnect() {
       await adoptStore(store);
     } catch (e) { banner("could not reopen that folder", "err"); }
   };
+}
+
+/* --------------------------------------------------------- the 3D panel */
+
+function can3d() {
+  return S.store && typeof S.store.hasIfc === "function" && S.store.hasIfc(S.model);
+}
+
+/** "29 MB" for a published IFC, so the cost is visible before clicking. */
+function ifcSizeLabel() {
+  if (!S.store || typeof S.store.ifcBytes !== "function") return "";
+  const b = S.store.ifcBytes(S.model);
+  return b ? `${(b / 1e6).toFixed(0)} MB` : "";
+}
+
+/* Layout modes. Split is the point of the exercise -- judging a plan against
+ * the model it came from means seeing both at once -- but either alone gets the
+ * full window when you want to look closely.
+ *
+ * Note the name: `S.view` was already the 2D pan/zoom state, and reusing it
+ * here silently clobbered the plan's viewport. Hence `S.layout`.
+ */
+const MODES = ["plan", "split", "model"];
+
+function setView(mode) {
+  if (mode !== "plan" && !can3d()) mode = "plan";
+  S.layout = mode;
+  const show3 = mode !== "plan";
+  const show2 = mode !== "model";
+
+  $("pane2d").hidden = !show2;
+  $("view3d").hidden = !show3;
+  $("splitter").hidden = mode !== "split";
+  $("panes").style.setProperty("--split", mode === "split" ? S.splitPct + "%" : "100%");
+
+  $("tab2d").classList.toggle("active", mode === "plan");
+  $("tabSplit").classList.toggle("active", mode === "split");
+  $("tab3d").classList.toggle("active", mode === "model");
+
+  if (show3) load3d();
+  // Both canvases must be re-measured once the panes have their new widths.
+  requestAnimationFrame(() => {
+    if (show2 && S.plan) fit();
+    if (S.viewer) S.viewer.resize();
+  });
+}
+
+function cycleView() {
+  const i = MODES.indexOf(S.layout);
+  let next = MODES[(i + 1) % MODES.length];
+  if (next !== "plan" && !can3d()) next = "plan";
+  setView(next);
+}
+
+function on3dModelChanged() {
+  const has = can3d();
+  $("tab3d").disabled = !has;
+  $("tabSplit").disabled = !has;
+  $("tabNote").textContent = has ? ifcSizeLabel() :
+    (S.store && S.store.mode === "dir"
+      ? "no IFC file for this model in the folder"
+      : "no IFC published for this model");
+  loaded3dFor = null;                    // a different building needs reloading
+  setView(has ? S.layout : "plan");
+}
+
+let loaded3dFor = null;
+let loading3d = null;
+
+async function load3d() {
+  if (loaded3dFor === S.model) return;
+  if (loading3d) return loading3d;
+  const note = $("load3d");
+  const say = (t) => {
+    if (t === null || t === undefined) { note.className = "loading3d"; return; }
+    note.className = "loading3d on";
+    note.textContent = t;
+  };
+  loading3d = (async () => {
+    try {
+      const sz = ifcSizeLabel();
+      say(sz ? `downloading the IFC (${sz})…` : "loading 3D libraries…");
+      if (!S.viewer) S.viewer = new BIMSGViewer.Viewer($("canvas3d"));
+      const file = await S.store.getIfcFile(S.model);
+      const info = await S.viewer.load(file, say);
+      loaded3dFor = S.model;
+      S.viewer.resize();
+      setupSection();
+      syncSectionToFloor();
+      say(null);
+      banner(`IFC loaded — ${info.storeys} storeys` +
+             (info.skipped ? `, ${info.skipped} unreadable solids skipped` : ""));
+    } catch (e) {
+      console.error(e);
+      say("Could not load this IFC.\n\n" + (e && e.message ? e.message : "") +
+          "\n\nThe 3D view needs three.js and web-ifc from a CDN; if this " +
+          "machine is offline it will not work. Annotation is unaffected.");
+      loaded3dFor = null;
+    } finally { loading3d = null; }
+  })();
+  return loading3d;
+}
+
+/* ---------------------------------------------------------- the section */
+
+/* The slider runs over the model's own vertical extent rather than 0..100, so
+ * its label is a real elevation and lines up with the storey names. */
+function sectionRange() {
+  const b = (S.viewer && S.viewer.bounds) || { min: 0, max: 30 };
+  const lo = Number.isFinite(b.min) ? b.min : 0;
+  const hi = Number.isFinite(b.max) ? b.max : lo + 30;
+  return { lo, hi: hi > lo ? hi : lo + 30 };
+}
+
+function setupSection() {
+  renderStoreyTicks();
+  $("cutSlider").value = $("cutSlider").max;   // whole building to begin with
+  applySection();
+}
+
+/** Storey names along the slider, so it reads as a building not a percentage. */
+function renderStoreyTicks() {
+  const box = $("cutTicks");
+  if (!box) return;
+  box.innerHTML = "";
+  const st = (S.viewer && S.viewer.storeys) || [];
+  const { lo, hi } = sectionRange();
+  for (const s of st) {
+    const f = (s.elevation - lo) / (hi - lo);
+    if (!Number.isFinite(f) || f < 0 || f > 1) continue;
+    const t = document.createElement("i");
+    t.style.left = (f * 100).toFixed(2) + "%";
+    t.title = `${s.name} · ${s.elevation.toFixed(2)} m`;
+    box.appendChild(t);
+  }
+}
+
+/** Read the controls and push a section to the viewer. */
+function applySection() {
+  if (!S.viewer || !S.viewer.meshes.length) return;
+  const sl = $("cutSlider");
+  const { lo, hi } = sectionRange();
+  const f = +sl.value / +sl.max;
+  const z = lo + (hi - lo) * f;
+  const lab = $("cutVal");
+
+  if (f >= 1 && !$("cutSlab").checked) {
+    S.viewer.clearSection();
+    lab.textContent = "whole building";
+    return;
+  }
+
+  if ($("cutSlab").checked) {
+    const i = S.viewer.storeyAt(z);
+    const sp = i >= 0 ? S.viewer.storeySlab(i) : null;
+    if (sp) {
+      S.viewer.setSection(sp.bottom, sp.top);
+      lab.textContent = `${S.viewer.storeys[i].name} · ${sp.bottom.toFixed(1)} m`;
+      return;
+    }
+  }
+  S.viewer.setSection(null, z);
+  const i = S.viewer.storeyAt(z);
+  lab.textContent = `up to ${z.toFixed(1)} m` +
+    (i >= 0 ? ` · ${S.viewer.storeys[i].name}` : "");
+}
+
+/* Put the section on the storey being annotated. The plan's storeys and the
+ * IFC's are different lists -- the pipeline repairs and sometimes re-bands
+ * them -- so they are matched by elevation rather than by index, which would
+ * silently show the wrong floor wherever the two disagree. */
+function syncSectionToFloor() {
+  if (!S.followFloor || !S.viewer || !S.viewer.meshes.length) return;
+  if (!S.plan || !S.plan.storeys[S.storey]) return;
+  const want = S.plan.storeys[S.storey].elevation;
+  const st = S.viewer.storeys;
+  if (!st.length) return;
+  let best = 0, bestD = Infinity;
+  st.forEach((s, i) => {
+    const d = Math.abs(s.elevation - want);
+    if (d < bestD) { bestD = d; best = i; }
+  });
+  const sp = S.viewer.storeySlab(best);
+  if (!sp) return;
+  if ($("cutSlab").checked) S.viewer.setSection(sp.bottom, sp.top);
+  else S.viewer.setSection(null, sp.top);
+
+  const { lo, hi } = sectionRange();
+  const sl = $("cutSlider");
+  sl.value = Math.round(((sp.bottom - lo) / (hi - lo)) * +sl.max);
+  $("cutVal").textContent = `${st[best].name} · ${sp.bottom.toFixed(1)} m` +
+    (bestD > 0.6 ? ` (nearest to ${want} m)` : "");
+}
+
+function wireViewer() {
+  $("tab2d").onclick = () => setView("plan");
+  $("tabSplit").onclick = () => setView("split");
+  $("tab3d").onclick = () => setView("model");
+  $("btnFit3d").onclick = () => S.viewer && S.viewer.fit();
+  $("btnTop3d").onclick = () => S.viewer && S.viewer.topView();
+
+  $("cutSlider").oninput = () => {
+    // Dragging the slider is an explicit instruction; stop following.
+    if (S.followFloor) { S.followFloor = false; $("cutFollow").checked = false; }
+    applySection();
+  };
+  $("cutSlab").onchange = () => (S.followFloor ? syncSectionToFloor() : applySection());
+  $("cutFollow").onchange = (e) => {
+    S.followFloor = e.target.checked;
+    S.followFloor ? syncSectionToFloor() : applySection();
+  };
+
+  // Drag the divider to rebalance the two panes.
+  const sp = $("splitter");
+  let dragging = false;
+  sp.addEventListener("pointerdown", (e) => {
+    dragging = true; sp.classList.add("dragging");
+    try { sp.setPointerCapture(e.pointerId); } catch (err) { /* fine */ }
+  });
+  sp.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const r = $("panes").getBoundingClientRect();
+    S.splitPct = Math.max(15, Math.min(85, ((e.clientX - r.left) / r.width) * 100));
+    $("panes").style.setProperty("--split", S.splitPct + "%");
+    if (S.plan) fit();
+    if (S.viewer) S.viewer.resize();
+  });
+  const stop = (e) => {
+    dragging = false; sp.classList.remove("dragging");
+    try { sp.releasePointerCapture(e.pointerId); } catch (err) { /* fine */ }
+    localStorage.setItem("bimsg_split", String(S.splitPct));
+  };
+  sp.addEventListener("pointerup", stop);
+  sp.addEventListener("pointercancel", stop);
+
+  const saved = +localStorage.getItem("bimsg_split");
+  if (saved >= 15 && saved <= 85) S.splitPct = saved;
 }
 
 /* ----------------------------------------------------------------- init */

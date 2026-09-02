@@ -301,15 +301,59 @@ svg.picking{cursor:crosshair}
 .splitter[hidden]{display:none}
 .canvas3d{position:absolute;inset:0}
 .canvas3d canvas{display:block;width:100%;height:100%}
+/* The section control. A bare range input told you nothing about the building,
+   so the track carries a tick per storey and the readout names the floor. */
 .cutbar{
-  position:absolute;left:10px;bottom:10px;right:10px;display:flex;align-items:center;
-  gap:10px;background:rgba(255,255,255,.95);border:1px solid var(--line);
-  border-radius:8px;padding:7px 11px;box-shadow:var(--shadow);font-size:12px;
-  flex-wrap:wrap;
+  position:absolute;left:12px;bottom:12px;right:12px;
+  background:rgba(255,255,255,.96);border:1px solid var(--line);
+  border-radius:10px;padding:9px 12px 7px;box-shadow:0 2px 10px rgba(16,24,40,.10);
+  font-size:12px;backdrop-filter:blur(6px);
 }
-.cutbar .chk{margin:0;white-space:nowrap;font-size:11.5px}
-.cutbar b{min-width:96px;text-align:right;font-variant-numeric:tabular-nums}
-.cutbar .hbtn{padding:4px 9px;font-size:11.5px}
+.cutrow{display:flex;align-items:center;gap:11px}
+.cutrow + .cutrow{margin-top:7px}
+.cutlabel{
+  font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;
+  color:var(--muted);white-space:nowrap;
+}
+.cutbar .chk{margin:0;white-space:nowrap;font-size:11.5px;cursor:pointer}
+.cutbar .spacer{flex:1}
+.cutbar b{
+  min-width:150px;text-align:right;font-variant-numeric:tabular-nums;
+  font-weight:600;white-space:nowrap;
+}
+.cutbar .hbtn{padding:4px 10px;font-size:11.5px}
+
+.slidewrap{position:relative;flex:1;height:22px;display:flex;align-items:center}
+/* Storey ticks sit under the thumb, at their true height in the model. */
+.cutticks{position:absolute;inset:0;pointer-events:none}
+.cutticks i{
+  position:absolute;top:3px;width:1px;height:7px;background:var(--h-storey);
+  opacity:.55;transform:translateX(-.5px);
+}
+.slidewrap input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;background:transparent;
+  margin:0;position:relative;z-index:1;
+}
+.slidewrap input[type=range]::-webkit-slider-runnable-track{
+  height:5px;border-radius:3px;
+  background:linear-gradient(90deg,var(--h-storey) 0%,var(--h-space) 100%);
+  opacity:.32;
+}
+.slidewrap input[type=range]::-moz-range-track{
+  height:5px;border-radius:3px;
+  background:linear-gradient(90deg,var(--h-storey),var(--h-space));opacity:.32;
+}
+.slidewrap input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;
+  background:#fff;border:2px solid var(--accent);margin-top:-5px;cursor:grab;
+  box-shadow:0 1px 3px rgba(16,24,40,.28);
+}
+.slidewrap input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border-radius:50%;background:#fff;
+  border:2px solid var(--accent);cursor:grab;box-shadow:0 1px 3px rgba(16,24,40,.28);
+}
+.slidewrap input[type=range]:active::-webkit-slider-thumb{cursor:grabbing}
+.slidewrap input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
 .hud3d{
   position:absolute;left:10px;top:10px;color:var(--muted);font-size:11px;
   background:rgba(255,255,255,.9);border:1px solid var(--line);

@@ -229,9 +229,11 @@
       this.scene.add(d2);
 
       this.root = new THREE.Group();
-      // IFC is Z-up, three is Y-up: (x,y,z) -> (x, z, -y), so an IFC elevation
-      // becomes a world Y and the section planes stay horizontal.
-      this.root.rotation.x = -Math.PI / 2;
+      // Deliberately no rotation. IFC is Z-up, but web-ifc has already
+      // converted: measured on model_0, its output spans Y -1.5..17.7 m against
+      // storey elevations 0, 4.9, 9.8 and 11.8, while X and Z carry the
+      // 116 x 83 m plan. Rotating again put the vertical axis into Z, which is
+      // why the section slider sliced the building sideways.
       this.scene.add(this.root);
 
       this._ray = new THREE.Raycaster();
@@ -359,7 +361,7 @@
       return out.sort((a, b) => a.elevation - b.elevation);
     }
 
-    /** The model's own vertical extent, in IFC z (= world Y after rotation). */
+    /** The model's own vertical extent in metres; world Y is the elevation. */
     _verticalBounds() {
       const box = this._worldBox();
       return box ? { min: box.min.y, max: box.max.y } : { min: 0, max: 30 };
@@ -381,7 +383,8 @@
 
     /* ---- section ---------------------------------------------------- */
 
-    /** Keep only what lies between two IFC elevations; either may be null. */
+    /** Keep only what lies between two elevations; either may be null. web-ifc
+     *  emits Y-up, so an elevation is a world Y and these stay horizontal. */
     setSection(bottom, top) {
       const planes = [];
       if (Number.isFinite(top))
