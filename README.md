@@ -35,8 +35,11 @@ The app is the same in all three; they differ only in where the work is kept.
 
 | | work is saved | needs | best for |
 |---|---|---|---|
-| **Dataset folder** | the annotator's own folder, on every save | Chrome or Edge | handing someone a folder; the only mode with the 3D IFC view |
+| **Dataset folder** | the annotator's own folder, on every save | Chrome or Edge | handing someone a folder; nothing to download and nothing to lose |
 | **GitHub Pages** | that browser, until downloaded | any browser | remote annotators, nothing to install |
+
+The 3D IFC view works in all three: from the hosted site it streams the model
+over HTTP, and from a folder it reads the file directly.
 | **Local server** | your machine, over HTTP | Python + Flask | a team on one network |
 
 ```bash
