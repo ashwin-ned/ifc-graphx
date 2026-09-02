@@ -63,6 +63,14 @@ jobs:
       - name: Check the dataset-folder backend
         run: python annotator/test_dir_mode.py
 
+      # The 3D view is the one part that cannot be exercised without a browser,
+      # and it broke on a bare `from "three"` in a CDN module that no other test
+      # could see. This checks the pinned modules still resolve in a browser and
+      # that the replacement orbit controls behave. It skips, rather than fails,
+      # when the CDN is unreachable.
+      - name: Check the 3D viewer's dependencies
+        run: python annotator/test_viewer_deps.py
+
       - name: Build static site
         run: python annotator/build_site.py --out dist
 

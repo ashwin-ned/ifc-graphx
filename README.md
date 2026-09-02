@@ -79,6 +79,13 @@ No bundler, no npm, no framework — the app is a handful of scripts with no
 imports, so there is no toolchain to maintain. three.js and web-ifc are the one
 exception and are fetched from a CDN on demand, only if the 3D view is opened.
 
+Only self-contained modules are fetched. three's addons, `OrbitControls` among
+them, are published with a bare `import ... from "three"` that a browser cannot
+resolve without an import map — loading one is what broke the viewer on first
+release — so the orbit/pan/dolly controls are ~60 lines in `viewer3d.js`
+instead. `test_viewer_deps.py` asserts that no module the viewer imports carries
+a bare specifier, and drives those controls against the real three.js build.
+
 Composition of a building graph exists twice, in `annotator/compose.py` and
 `annotator/static/compose.js`, because the browser must show an annotator the
 graph their verdicts produce while the collection script must build the same

@@ -20,18 +20,20 @@
   "use strict";
 
   const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js";
-  const ORBIT_URL = "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/controls/OrbitControls.js";
   const WEBIFC_URL = "https://cdn.jsdelivr.net/npm/web-ifc@0.0.77/web-ifc-api.js";
   const WASM_DIR = "https://cdn.jsdelivr.net/npm/web-ifc@0.0.77/";
 
-  let THREE = null, OrbitControls = null, WebIFC = null, ifcApi = null;
+  let THREE = null, WebIFC = null, ifcApi = null;
 
   async function loadLibs(onProgress) {
     if (THREE && ifcApi) return;
     onProgress && onProgress("loading 3D libraries…");
     if (!THREE) {
+      // Only the two self-contained modules are fetched. three's own addons --
+      // OrbitControls among them -- are published with a bare `from "three"`
+      // import, which a browser cannot resolve without an import map, and
+      // loading one was what broke this view. `Orbit` below replaces it.
       THREE = await import(THREE_URL);
-      ({ OrbitControls } = await import(ORBIT_URL));
     }
     if (!ifcApi) {
       WebIFC = await import(WEBIFC_URL);
@@ -65,8 +67,7 @@
       this.renderer.setSize(w, h);
       this.el.appendChild(this.renderer.domElement);
 
-      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-      this.controls.enableDamping = true;
+      this.controls = new Orbit(this.camera, this.renderer.domElement);
 
       this.scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 2.2));
       const d = new THREE.DirectionalLight(0xffffff, 1.4);
@@ -189,6 +190,11 @@
 
     fit() {
       if (!this.meshes.length) return;
+      // The meshes hang off a group rotated from IFC's Z-up into three's Y-up.
+      // Box3 reads world matrices, and nothing has rendered yet when fit() runs
+      // straight after load(), so those matrices are still identity and the box
+      // comes out in the wrong axes -- the model then frames off-screen.
+      this.scene.updateMatrixWorld(true);
       const box = new THREE.Box3();
       this.meshes.forEach((m) => box.expandByObject(m));
       if (box.isEmpty()) return;
@@ -196,10 +202,16 @@
       const c = box.getCenter(new THREE.Vector3());
       const r = Math.max(size.x, size.y, size.z) || 10;
       this.controls.target.copy(c);
-      this.camera.position.set(c.x + r, c.y + r * 0.8, c.z + r);
-      this.camera.near = r / 500; this.camera.far = r * 20;
+      this.camera.near = Math.max(r / 5000, 0.01);
+      this.camera.far = r * 40;
       this.camera.updateProjectionMatrix();
-      this.controls.update();
+      // Frame the box from a corner, far enough out that it fits the vertical
+      // field of view with a little margin.
+      this.controls.sph.set(
+        r * 1.6 / Math.tan((this.camera.fov / 2) * Math.PI / 180) * 0.5,
+        Math.PI / 3.2, Math.PI / 4);
+      this.controls.minDistance = Math.max(r / 1000, 0.01);
+      this.controls.apply();
     }
 
     resize() {
@@ -234,6 +246,114 @@
         this.renderer = null;
       }
     }
+  }
+
+  /* Orbit / pan / dolly, in place of three's OrbitControls addon.
+   *
+   * The addon is published with a bare `import ... from "three"`, which a
+   * browser refuses to resolve without an import map -- that is what broke this
+   * view. An import map would fix it, but writing the ~60 lines here removes
+   * the dependency and its failure mode altogether, and mirrors the pan/zoom
+   * already used by the 2D plan.
+   *
+   * Left drag orbits, right drag or shift-drag pans, wheel dollies. One finger
+   * orbits and two pinch, so a tablet works.
+   */
+  class Orbit {
+    constructor(camera, dom) {
+      this.camera = camera;
+      this.dom = dom;
+      this.target = new THREE.Vector3();
+      this.sph = new THREE.Spherical(20, Math.PI / 3, Math.PI / 4);
+      this.minDistance = 0.01;
+      this.maxDistance = Infinity;
+      this._drag = null;
+      this._pinch = 0;
+      this._bind();
+      this.apply();
+    }
+
+    /** Re-derive the orbit from wherever the camera currently is. */
+    syncFromCamera() {
+      this.sph.setFromVector3(
+        new THREE.Vector3().subVectors(this.camera.position, this.target));
+    }
+
+    apply() {
+      const EPS = 1e-4;
+      this.sph.phi = Math.max(EPS, Math.min(Math.PI - EPS, this.sph.phi));
+      this.sph.radius = Math.max(this.minDistance,
+                                 Math.min(this.maxDistance, this.sph.radius));
+      this.camera.position.copy(this.target)
+        .add(new THREE.Vector3().setFromSpherical(this.sph));
+      this.camera.lookAt(this.target);
+    }
+
+    rotate(dx, dy) {
+      const h = this.dom.clientHeight || 600;
+      this.sph.theta -= (2 * Math.PI * dx) / h;
+      this.sph.phi -= (2 * Math.PI * dy) / h;
+      this.apply();
+    }
+
+    /** Pan in the camera's own plane, scaled so a drag tracks the cursor. */
+    pan(dx, dy) {
+      const h = this.dom.clientHeight || 600;
+      const span = 2 * this.sph.radius *
+        Math.tan((this.camera.fov / 2) * Math.PI / 180);
+      const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 1);
+      this.target
+        .addScaledVector(right, (-dx * span) / h)
+        .addScaledVector(up, (dy * span) / h);
+      this.apply();
+    }
+
+    dolly(factor) { this.sph.radius *= factor; this.apply(); }
+
+    _bind() {
+      const d = this.dom;
+      d.style.touchAction = "none";
+      d.addEventListener("contextmenu", (e) => e.preventDefault());
+
+      d.addEventListener("pointerdown", (e) => {
+        d.setPointerCapture(e.pointerId);
+        this._drag = {
+          x: e.clientX, y: e.clientY,
+          pan: e.button === 2 || e.button === 1 || e.shiftKey,
+        };
+      });
+      d.addEventListener("pointermove", (e) => {
+        if (!this._drag) return;
+        const dx = e.clientX - this._drag.x, dy = e.clientY - this._drag.y;
+        this._drag.x = e.clientX; this._drag.y = e.clientY;
+        this._drag.pan ? this.pan(dx, dy) : this.rotate(dx, dy);
+      });
+      const end = (e) => {
+        this._drag = null;
+        try { d.releasePointerCapture(e.pointerId); } catch (err) { /* gone */ }
+      };
+      d.addEventListener("pointerup", end);
+      d.addEventListener("pointercancel", end);
+
+      d.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        this.dolly(e.deltaY < 0 ? 1 / 1.12 : 1.12);
+      }, { passive: false });
+
+      d.addEventListener("touchmove", (e) => {
+        if (e.touches.length !== 2) return;
+        e.preventDefault();
+        const [a, b] = e.touches;
+        const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+        if (this._pinch) this.dolly(this._pinch / dist);
+        this._pinch = dist;
+      }, { passive: false });
+      d.addEventListener("touchend", () => { this._pinch = 0; });
+    }
+
+    // The render loop calls this; there is no inertia to integrate.
+    update() {}
   }
 
   /* three's BufferGeometryUtils is another import; merging positions and
