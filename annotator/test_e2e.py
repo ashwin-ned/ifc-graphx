@@ -208,6 +208,68 @@ await page.waitForTimeout(150);
 added = await page.evaluate(() => window.BIMSGApp.state.anno.added_edges.length);
 ok("Delete removes the link it added", added === 0, `got ${added}`);
 
+console.log("\n-- accepting the rest of a floor --");
+/* The sweep must fill in only what is unjudged: an annotator marks the wrong
+   ones first and accepts the remainder, so an existing verdict it overwrote
+   would quietly destroy the careful part of their work. */
+await page.keyboard.press("Escape");
+// The links layer is back on by now and its click targets sit over the rooms,
+// so hide it again to reach a room the way the earlier block did.
+await page.uncheck("#lyEdges");
+await page.waitForTimeout(150);
+await polys.nth(nRooms - 1).click();
+await page.waitForTimeout(120);
+await page.keyboard.press("2");                       // one deliberate spurious
+await page.waitForTimeout(150);
+const marked = await page.evaluate(() => {
+  const e = Object.entries(window.BIMSGApp.state.anno.rooms)
+    .find(([, v]) => v.verdict === "spurious");
+  return e ? e[0] : null;
+});
+ok("a room can be marked spurious before sweeping", !!marked);
+
+await page.click("#btnSweep");
+await page.waitForTimeout(200);
+ok("the sweep asks before doing anything",
+   (await page.locator("#mask.on").count()) > 0);
+await page.click("#dlgYes");
+await page.waitForTimeout(300);
+
+const swept = await page.evaluate((id) => {
+  const A = window.BIMSGApp.state;
+  const st = A.plan.storeys[A.storey];
+  const key = (a, b) => (a < b ? a + "|" + b : b + "|" + a);
+  return {
+    roomsUnjudged: st.rooms.filter((r) => !(A.anno.rooms[r.id] || {}).verdict).length,
+    linksUnjudged: st.edges.filter((e) => !A.anno.edges[key(e.a, e.b)]).length,
+    keptSpurious: (A.anno.rooms[id] || {}).verdict,
+    spuriousIsBulk: !!(A.anno.rooms[id] || {}).bulk,
+    bulkRooms: Object.values(A.anno.rooms).filter((r) => r.bulk).length,
+    bulkLinks: Object.values(A.anno.edges).filter((r) => r.bulk).length,
+  };
+}, marked);
+ok("every room on the floor is now judged", swept.roomsUnjudged === 0,
+   String(swept.roomsUnjudged));
+ok("every link on the floor is now judged", swept.linksUnjudged === 0,
+   String(swept.linksUnjudged));
+ok("the deliberate 'spurious' survived the sweep",
+   swept.keptSpurious === "spurious", String(swept.keptSpurious));
+ok("and was not relabelled as bulk", swept.spuriousIsBulk === false);
+ok(`swept verdicts are flagged bulk (${swept.bulkRooms} rooms, ${swept.bulkLinks} links)`,
+   swept.bulkRooms > 0 && swept.bulkLinks > 0);
+ok("the storey now shows as done",
+   (await page.locator("#storeyList button .tick").count()) > 0);
+await page.check("#lyEdges");
+await page.waitForTimeout(120);
+
+await page.keyboard.press("Control+z");
+await page.waitForTimeout(250);
+const afterUndo = await page.evaluate(() =>
+  Object.values(window.BIMSGApp.state.anno.rooms).filter((r) => r.bulk).length);
+ok("Ctrl+Z undoes the whole sweep at once", afterUndo === 0, String(afterUndo));
+await page.keyboard.press("Control+Shift+z");
+await page.waitForTimeout(250);
+
 console.log("\n-- storeys --");
 const storeys = await page.locator("#storeyList button").count();
 ok(`the storey list is populated (${storeys})`, storeys > 0);

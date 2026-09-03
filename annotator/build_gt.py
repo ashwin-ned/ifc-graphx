@@ -228,8 +228,18 @@ def main():
                   open(os.path.join(args.out, f"{model}__{who}.gt.json"), "w"), indent=1)
         written += 1
         c = g["counts"]
+        bulk = c.get("rooms_bulk", 0) + c.get("links_bulk", 0)
+        judged = c["rooms_judged"] + c["links_judged"]
+        note = ""
+        if bulk:
+            note = (f", {bulk}/{judged} judged in bulk"
+                    if judged else f", {bulk} judged in bulk")
         print(f"  {model}__{who}: {c['rooms_kept']} rooms, {c['links_kept']} links, "
-              f"{c['vertical_kept']} floor links, {len(g['held_out'])} held out")
+              f"{c['vertical_kept']} floor links, {len(g['held_out'])} held out{note}")
+        if judged and bulk / judged > 0.9:
+            print(f"      {bulk / judged:.0%} of this building was accepted with "
+                  f"'rest of floor is correct' rather than judged item by item; "
+                  f"treat it as weaker evidence than a hand-checked building")
 
     summary = {"files": len(pairs), "written": written, "skipped": skipped,
                "agreement": agree_rows}

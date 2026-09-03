@@ -923,6 +923,70 @@ function askText(title, def, cb) {
   };
 }
 
+function askConfirm(title, bodyHtml, yesLabel, cb) {
+  $("dlg").innerHTML = `
+    <h3>${esc(title)}</h3>
+    ${bodyHtml}
+    <div class="row2">
+      <button class="ghost" id="dlgNo" style="margin:0">Cancel</button>
+      <button class="primary" id="dlgYes" style="margin:0">${esc(yesLabel)}</button>
+    </div>`;
+  $("mask").className = "mask on";
+  $("dlgNo").onclick = closeDlg;
+  $("dlgYes").onclick = () => { closeDlg(); cb(); };
+}
+
+/* Mark everything still unjudged on this floor as correct.
+ *
+ * Judging seventy links one at a time is punishing when the pipeline got most
+ * of them right, and the real workflow is to correct the few that are wrong and
+ * accept the rest. Two rules keep that from becoming a rubber stamp:
+ *
+ *   - It only ever fills in items with *no* verdict. Anything already marked
+ *     spurious or unsure is left exactly as it is, so the order is always
+ *     "fix the wrong ones, then sweep".
+ *   - Each verdict it writes carries `bulk: true`. A swept "correct" is weaker
+ *     evidence than one someone stopped and looked at, and since agreement
+ *     between annotators is the ceiling on every claim made from this data, the
+ *     dataset should say which is which rather than pretend they are the same.
+ *
+ * Floor-to-floor links are deliberately not included: there are only a handful
+ * per building and they are what chains the storeys together, so they are worth
+ * a deliberate look each.
+ */
+function sweepFloor() {
+  if (!S.plan) return;
+  const st = storey();
+  const rooms = st.rooms.filter((r) => !roomJudged(r.id));
+  const links = st.edges.filter((e) => !S.anno.edges[edgeKey(e.a, e.b)]);
+  if (!rooms.length && !links.length) {
+    banner("nothing left unjudged on this floor");
+    return;
+  }
+  const already = st.rooms.length - rooms.length + st.edges.length - links.length;
+  askConfirm(
+    `Mark the rest of ${st.name} correct?`,
+    `<p>This sets <b>${rooms.length} room(s)</b> and <b>${links.length} link(s)</b>
+     that you have not judged yet to <b>correct</b>.</p>
+     ${already ? `<p class="muted">Your ${already} existing verdict(s) on this
+       floor are left untouched.</p>` : ""}
+     <p class="muted">These are recorded as judged in bulk, so we can tell them
+     apart from ones you looked at individually. <b>Ctrl+Z</b> undoes the whole
+     sweep.</p>`,
+    "Mark them correct",
+    () => {
+      mutate(`mark rest of ${st.name} correct`, () => {
+        for (const r of rooms)
+          S.anno.rooms[r.id] = { ...(S.anno.rooms[r.id] || {}),
+                                 verdict: "correct", bulk: true };
+        for (const e of links)
+          S.anno.edges[edgeKey(e.a, e.b)] = {
+            verdict: "correct", a: e.a, b: e.b, bulk: true };
+      });
+      banner(`${rooms.length} rooms and ${links.length} links marked correct`);
+    });
+}
+
 function showGuide() {
   $("dlg").innerHTML = `
     <h3>How to annotate</h3>
@@ -1009,6 +1073,7 @@ window.addEventListener("keydown", (e) => {
   else if (k === "f") fit();
   else if (k === "?" || (e.shiftKey && k === "/")) showGuide();
   else if (k === "delete" || k === "backspace") { e.preventDefault(); deleteSelected(); }
+  else if (k === "!" || (e.shiftKey && k === "1")) { e.preventDefault(); sweepFloor(); }
   else if (k === "0") setVerdict(null);
   else if (["1", "2", "3", "4", "5"].includes(k)) {
     const list = S.sel?.kind === "room" ? VERDICTS : EDGE_VERDICTS;
@@ -1443,6 +1508,7 @@ $("btnSave").onclick = () => save();
 $("btnUndo").onclick = undo;
 $("btnRedo").onclick = redo;
 $("btnGuide").onclick = showGuide;
+$("btnSweep").onclick = sweepFloor;
 $("btnPrev").onclick = () => stepModel(-1);
 $("btnNext").onclick = () => stepModel(1);
 wireViewer();
@@ -1512,6 +1578,7 @@ window.BIMSGApp = {
   get state() { return S; },
   get viewer() { return S.viewer; },
   setView, cycleView, applySection, syncSectionToFloor, sectionRange, can3d,
+  sweepFloor,
   frameRooms, roomFootprint,
 };
 

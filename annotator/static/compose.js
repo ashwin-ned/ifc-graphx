@@ -29,8 +29,8 @@
     const nodes = [], edges = [], heldOut = [], requests = [];
     const counts = {
       rooms_total: 0, rooms_judged: 0, rooms_kept: 0,
-      rooms_labelled_only: 0,
-      links_total: 0, links_judged: 0, links_kept: 0,
+      rooms_labelled_only: 0, rooms_bulk: 0,
+      links_total: 0, links_judged: 0, links_kept: 0, links_bulk: 0,
       vertical_total: 0, vertical_judged: 0, vertical_kept: 0,
     };
 
@@ -49,7 +49,7 @@
         counts.rooms_total += 1;
         const a = roomsV[r.id] || {};
         const v = a.verdict;
-        if (v) counts.rooms_judged += 1;
+        if (v) { counts.rooms_judged += 1; if (a.bulk) counts.rooms_bulk += 1; }
         // Looked at and relabelled, but never judged -- counted apart so
         // "not started" and "nearly done" are distinguishable.
         else if (a.label || a.note) counts.rooms_labelled_only += 1;
@@ -69,6 +69,8 @@
           provenance: r.source === "ifc" ? "ifc" : "inferred",
           verdict: v,
         };
+        // Judged on its own, or swept in with the rest of a floor.
+        if (a.bulk) n.bulk = true;
         if (a.note) n.note = a.note;
         nodes.push(n);
         edges.push({ a: st.gid, b: r.id, relation: "contains", provenance: "ifc" });
@@ -81,7 +83,7 @@
         counts.links_total += 1;
         const a = edgesV[key(e.a, e.b)] || {};
         const v = a.verdict;
-        if (v) counts.links_judged += 1;
+        if (v) { counts.links_judged += 1; if (a.bulk) counts.links_bulk += 1; }
         if (v === "unsure") {
           heldOut.push({ a: e.a, b: e.b, kind: "link", storey: st.gid });
           continue;
@@ -95,6 +97,7 @@
         counts.links_kept += 1;
         const out = { a: e.a, b: e.b, relation: e.type, storey: st.gid,
                       provenance: "ifc+annotator" };
+        if (a.bulk) out.bulk = true;
         if (e.width) out.width = e.width;
         edges.push(out);
       }

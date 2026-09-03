@@ -23,6 +23,11 @@ Verdict semantics, deliberately conservative:
     unjudged  -> not in the graph, and counted, so partial work is never
                  mistaken for a finished building
 
+A verdict applied by "the rest of this floor is correct" is flagged `bulk` on
+the node or edge and counted in `rooms_bulk` / `links_bulk`. It is ground truth
+like any other, but it was not looked at individually, and anything measuring
+against this data should be able to weigh that.
+
 Anything the annotator added is included with `provenance: "annotator"`.
 """
 
@@ -44,7 +49,9 @@ def compose(plan: dict, anno: dict) -> dict:
     nodes, edges, held_out, requests = [], [], [], []
     counts = {"rooms_total": 0, "rooms_judged": 0, "rooms_kept": 0,
               "rooms_labelled_only": 0,
+              "rooms_bulk": 0,
               "links_total": 0, "links_judged": 0, "links_kept": 0,
+              "links_bulk": 0,
               "vertical_total": 0, "vertical_judged": 0, "vertical_kept": 0}
 
     building = plan.get("model", "building")
@@ -66,6 +73,8 @@ def compose(plan: dict, anno: dict) -> dict:
             v = a.get("verdict")
             if v:
                 counts["rooms_judged"] += 1
+                if a.get("bulk"):
+                    counts["rooms_bulk"] += 1
             elif a.get("label") or a.get("note"):
                 # Someone looked at this room and corrected it, but never gave a
                 # verdict. Worth counting separately: it is the difference
@@ -90,6 +99,10 @@ def compose(plan: dict, anno: dict) -> dict:
                 "parent": st["gid"],
                 "provenance": "ifc" if r["source"] == "ifc" else "inferred",
                 "verdict": v,
+                # Whether this was judged on its own or swept in with the rest
+                # of a floor. A swept verdict is weaker evidence and anything
+                # measuring against this data should be able to tell.
+                **({"bulk": True} if a.get("bulk") else {}),
                 **({"note": a["note"]} if a.get("note") else {}),
             })
             edges.append({"a": st["gid"], "b": r["id"], "relation": "contains",
@@ -103,6 +116,8 @@ def compose(plan: dict, anno: dict) -> dict:
             v = a.get("verdict")
             if v:
                 counts["links_judged"] += 1
+                if a.get("bulk"):
+                    counts["links_bulk"] += 1
             if v == "unsure":
                 held_out.append({"a": e["a"], "b": e["b"], "kind": "link",
                                  "storey": st["gid"]})
@@ -118,6 +133,7 @@ def compose(plan: dict, anno: dict) -> dict:
             counts["links_kept"] += 1
             edges.append({"a": e["a"], "b": e["b"], "relation": e["type"],
                           "storey": st["gid"], "provenance": "ifc+annotator",
+                          **({"bulk": True} if a.get("bulk") else {}),
                           **({"width": e["width"]} if e.get("width") else {})})
 
     for e in added_e:

@@ -59,11 +59,16 @@ def random_anno(plan, rng):
                 e["label"] = "relabelled"
             if rng.random() < 0.2:
                 e["note"] = "a note"
+            # Swept verdicts carry a flag both composers must agree about.
+            if rng.random() < 0.35:
+                e["bulk"] = True
             rooms[r["id"]] = e
         for e in st["edges"]:
             v = rng.choice(LINK_VERDICTS)
             if v is not None:
-                edges[_key(e["a"], e["b"])] = {"verdict": v, "a": e["a"], "b": e["b"]}
+                edges[_key(e["a"], e["b"])] = {
+                    "verdict": v, "a": e["a"], "b": e["b"],
+                    **({"bulk": True} if rng.random() < 0.35 else {})}
     for v in plan.get("vertical") or []:
         k = rng.choice(LINK_VERDICTS)
         if k is not None:

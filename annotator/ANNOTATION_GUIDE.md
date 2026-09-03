@@ -163,6 +163,29 @@ Click a room or a link, then press a number.
 
 Rooms take all five. Links take only <kbd>1</kbd>, <kbd>2</kbd>, <kbd>3</kbd>.
 
+### Accepting the rest of a floor
+
+The pipeline gets most links right, and judging seventy of them one at a time is
+punishing. So the intended rhythm is: **mark the wrong ones first, then accept
+the rest.**
+
+> **Rest of this floor is correct** (in the left panel, under Progress, or
+> <kbd>Shift</kbd>+<kbd>1</kbd>) marks every room and link on the floor you have
+> *not* judged as correct.
+
+It never touches a verdict you have already given, so anything you marked
+spurious or unsure stays exactly as it is. <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes
+the whole sweep in one go.
+
+It does not touch floor-to-floor links. There are only a handful per building
+and they are what joins the storeys together, so each is worth a look.
+
+Please still *look* at the floor before sweeping it. Verdicts made this way are
+recorded separately from ones you considered individually, because a building
+that was swept end to end is weaker evidence than one that was checked — and we
+would rather know which is which than have a dataset that quietly overstates
+itself.
+
 ### Please use "unsure" freely
 
 This is the most important instruction in this document. **A guessed verdict is
@@ -259,6 +282,7 @@ is finished, so it is better to finish one building than to half-do three.
 |---|---|
 | <kbd>1</kbd>–<kbd>5</kbd> | Set verdict on what is selected |
 | <kbd>0</kbd> | Clear the verdict |
+| <kbd>Shift</kbd>+<kbd>1</kbd> | Accept the rest of this floor as correct |
 | <kbd>Esc</kbd> | Back to judging mode |
 | <kbd>A</kbd> | Link two rooms on this floor |
 | <kbd>V</kbd> | Link two rooms across floors |
