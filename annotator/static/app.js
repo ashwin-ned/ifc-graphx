@@ -1053,7 +1053,18 @@ function showGuide() {
 /* ------------------------------------------------------------ shortcuts */
 
 window.addEventListener("keydown", (e) => {
-  const typing = ["INPUT", "TEXTAREA"].includes(e.target.tagName);
+  /* Only text entry should swallow shortcuts.
+   *
+   * Treating every <input> as typing meant that ticking a layer checkbox or
+   * nudging the section slider left focus on a control that is not text, and
+   * every shortcut went dead until the annotator happened to click elsewhere --
+   * silently, with nothing to suggest why "]" had stopped changing floors. */
+  const t = e.target;
+  const type = String(t.type || "").toLowerCase();
+  const typing = t.tagName === "TEXTAREA" || t.isContentEditable ||
+    (t.tagName === "INPUT" &&
+     !["checkbox", "radio", "range", "button", "submit", "reset", "file", "color"]
+       .includes(type));
   const k = e.key.toLowerCase();
 
   if ((e.ctrlKey || e.metaKey) && k === "s") { e.preventDefault(); save(); return; }

@@ -270,6 +270,20 @@ ok("Ctrl+Z undoes the whole sweep at once", afterUndo === 0, String(afterUndo));
 await page.keyboard.press("Control+Shift+z");
 await page.waitForTimeout(250);
 
+/* Shortcuts must survive touching a checkbox or the slider. Treating those as
+   text entry killed every key until the annotator clicked elsewhere, with
+   nothing on screen to explain it. */
+await page.check("#lyDoors");
+await page.waitForTimeout(120);
+const beforeKey = await page.evaluate(() => window.BIMSGApp.state.storey);
+await page.keyboard.press("]");
+await page.waitForTimeout(250);
+const afterKey = await page.evaluate(() => window.BIMSGApp.state.storey);
+ok("shortcuts still work with a checkbox focused", afterKey !== beforeKey,
+   `${beforeKey} -> ${afterKey}`);
+await page.keyboard.press("[");
+await page.waitForTimeout(200);
+
 console.log("\n-- storeys --");
 const storeys = await page.locator("#storeyList button").count();
 ok(`the storey list is populated (${storeys})`, storeys > 0);
@@ -557,6 +571,17 @@ def main():
             r = subprocess.run([NODE, drv, base, shots, ifc_name],
                                capture_output=True, text=True, env=env)
             print(r.stdout.rstrip())
+            # Say plainly how many checks failed. Reading the tail of a long
+            # log and counting only the PASS lines is how a red run gets
+            # reported as green.
+            npass = r.stdout.count("  PASS ")
+            nfail = r.stdout.count("  FAIL ")
+            print(f"\n{npass} passed, {nfail} failed")
+            if nfail:
+                print("failing checks:")
+                for line in r.stdout.splitlines():
+                    if line.startswith("  FAIL "):
+                        print("  " + line.strip())
             # Always show the driver's own error: a crash mid-run leaves partial
             # stdout, and hiding stderr behind "stdout was empty" loses it.
             if r.returncode != 0 and r.stderr.strip():
@@ -573,7 +598,7 @@ def main():
             if r.returncode:
                 return 1
 
-    print("\nPASS the annotator works end to end in a real browser")
+    print("PASS the annotator works end to end in a real browser")
     return 0
 
 
