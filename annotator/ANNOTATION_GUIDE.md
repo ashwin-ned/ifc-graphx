@@ -152,16 +152,31 @@ spurious, amber dashed = unsure.
 
 Click a room or a link, then press a number.
 
-| Key | Verdict | Use it when |
-|---|---|---|
-| <kbd>1</kbd> | correct | The thing is real and correctly placed. |
-| <kbd>2</kbd> | spurious | The thing is not real. There is no such room, or you cannot walk between those two rooms. |
-| <kbd>3</kbd> | unsure | You genuinely cannot tell. |
-| <kbd>4</kbd> | should merge | This is really *one* room that has been split into several. |
-| <kbd>5</kbd> | should split | This is really *several* rooms that have been merged into one. |
-| <kbd>0</kbd> | clear | Undo the verdict, leave it unjudged. |
+The two keys mean different things depending on what you selected, so the
+buttons say which.
 
-Rooms take all five. Links take only <kbd>1</kbd>, <kbd>2</kbd>, <kbd>3</kbd>.
+**On a room:**
+
+| Key | Button | Means |
+|---|---|---|
+| <kbd>1</kbd> | Real room | A real room, and its outline is about right. |
+| <kbd>2</kbd> | Not a room | There is no room here — a shaft, a void, or an artefact of the recovery. |
+| <kbd>3</kbd> | Unsure | You genuinely cannot tell. |
+| <kbd>4</kbd> | Merge | This and a neighbour are really one room. |
+| <kbd>5</kbd> | Split | This one shape covers several real rooms. |
+| <kbd>0</kbd> | — | Clear the verdict, leave it unjudged. |
+
+**On a link (or a floor-to-floor link):**
+
+| Key | Button | Means |
+|---|---|---|
+| <kbd>1</kbd> | Can walk | You can go straight between these two rooms. |
+| <kbd>2</kbd> | Cannot walk | There is no way through — a wall, a window, or the route actually goes via a third room. |
+| <kbd>3</kbd> | Unsure | You genuinely cannot tell. |
+
+So key <kbd>2</kbd> always means **"this is not real"** — either the room does
+not exist, or you cannot walk that way. It is not a judgement about the room's
+*name*: to fix a name, edit the label box and still give the room a verdict.
 
 ### Accepting the rest of a floor
 

@@ -370,3 +370,11 @@ svg.picking{cursor:crosshair}
   padding:24px;line-height:1.6;
 }
 .loading3d.on{display:flex}
+
+/* The verdict glossary under the buttons. "Spurious" read as "wrong somehow"
+   rather than "this does not exist", and a room and a link fail differently,
+   so each button says what it means for the thing in hand. */
+.vlegend{margin:-4px 0 4px;font-size:11px;line-height:1.65;color:var(--muted)}
+.vlegend div{display:flex;gap:6px;align-items:baseline}
+.vlegend kbd{margin:0;flex:none}
+.vlegend b{color:var(--ink);font-weight:600;white-space:nowrap}

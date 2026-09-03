@@ -82,11 +82,16 @@
     <section>
       <h2>Verdict outline</h2>
       <div class="legend">
-        <div><span class="sw" style="background:var(--v-correct)"></span>correct <kbd>1</kbd></div>
-        <div><span class="sw" style="background:var(--v-spurious)"></span>spurious <kbd>2</kbd></div>
-        <div><span class="sw" style="background:var(--v-unsure)"></span>unsure <kbd>3</kbd></div>
-        <div><span class="sw" style="background:var(--v-merge)"></span>should merge <kbd>4</kbd></div>
-        <div><span class="sw" style="background:var(--v-split)"></span>should split <kbd>5</kbd></div>
+        <div title="A real room / you can walk between these rooms"><span
+          class="sw" style="background:var(--v-correct)"></span>real <kbd>1</kbd></div>
+        <div title="No room here / no way through"><span
+          class="sw" style="background:var(--v-spurious)"></span>not real <kbd>2</kbd></div>
+        <div title="You genuinely cannot tell"><span
+          class="sw" style="background:var(--v-unsure)"></span>unsure <kbd>3</kbd></div>
+        <div title="This and a neighbour are one room"><span
+          class="sw" style="background:var(--v-merge)"></span>merge <kbd>4</kbd></div>
+        <div title="This covers several rooms"><span
+          class="sw" style="background:var(--v-split)"></span>split <kbd>5</kbd></div>
         <div><span class="sw" style="background:var(--v-todo)"></span>unjudged <kbd>0</kbd></div>
       </div>
     </section>

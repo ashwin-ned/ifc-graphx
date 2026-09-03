@@ -1,0 +1,846 @@
+{
+ "model": "model_0",
+ "annotator": "AN",
+ "updated": "2026-09-03T10:58:57Z",
+ "source": "annotated",
+ "complete": false,
+ "counts": {
+  "rooms_total": 29,
+  "rooms_judged": 28,
+  "rooms_kept": 28,
+  "rooms_labelled_only": 0,
+  "rooms_bulk": 2,
+  "links_total": 28,
+  "links_judged": 16,
+  "links_kept": 14,
+  "links_bulk": 11,
+  "vertical_total": 4,
+  "vertical_judged": 4,
+  "vertical_kept": 2
+ },
+ "nodes": [
+  {
+   "id": "model_0",
+   "layer": "building",
+   "label": "model_0",
+   "provenance": "ifc"
+  },
+  {
+   "id": "2JF4e6axWHqu3u0C1FZlmi",
+   "layer": "storey",
+   "label": "GROUND FLOOR",
+   "elevation": 0,
+   "parent": "model_0",
+   "provenance": "ifc"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMC",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "LIVING ROOM",
+   "predicted_label": null,
+   "area": 10.77,
+   "centroid": [
+    -5.364,
+    17.664
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMB",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "LIVING ROOM",
+   "predicted_label": null,
+   "area": 11.11,
+   "centroid": [
+    -9.796,
+    17.664
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMM",
+   "layer": "space",
+   "label": "KITCHEN",
+   "ifc_label": "KITCHEN",
+   "predicted_label": null,
+   "area": 11.02,
+   "centroid": [
+    -5.414,
+    0.464
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeML",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "LIVING ROOM",
+   "predicted_label": null,
+   "area": 10.86,
+   "centroid": [
+    -9.846,
+    0.464
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMG",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "Room Name",
+   "predicted_label": "bedroom",
+   "area": 11.02,
+   "centroid": [
+    -5.414,
+    -16.536
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMV",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "Room Name",
+   "predicted_label": "bedroom",
+   "area": 10.86,
+   "centroid": [
+    -9.846,
+    -16.536
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMQ",
+   "layer": "space",
+   "label": "MASTER BEDROOM",
+   "ifc_label": "MASTER BEDROOM",
+   "predicted_label": null,
+   "area": 24.83,
+   "centroid": [
+    -14.096,
+    -14.468
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMZ",
+   "layer": "space",
+   "label": "MASTER BEDROOM",
+   "ifc_label": "MASTER BEDROOM",
+   "predicted_label": null,
+   "area": 22.36,
+   "centroid": [
+    -14.096,
+    -4.036
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMk",
+   "layer": "space",
+   "label": "BATHROOM",
+   "ifc_label": "BATHROOM",
+   "predicted_label": null,
+   "area": 5.22,
+   "centroid": [
+    -13.164,
+    0.464
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMj",
+   "layer": "space",
+   "label": "BATHROOM",
+   "ifc_label": "BATHROOM",
+   "predicted_label": null,
+   "area": 4.94,
+   "centroid": [
+    -15.077,
+    0.464
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMe",
+   "layer": "space",
+   "label": "MASTER BEDROOM",
+   "ifc_label": "MASTER BEDROOM",
+   "predicted_label": null,
+   "area": 23.1,
+   "centroid": [
+    -14.096,
+    5.064
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMt",
+   "layer": "space",
+   "label": "STAIRCASE",
+   "ifc_label": "STAIRCASE",
+   "predicted_label": null,
+   "area": 14.99,
+   "centroid": [
+    -14.036,
+    10.214
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeM_",
+   "layer": "space",
+   "label": "MASTER BEDROOM",
+   "ifc_label": "MASTER BEDROOM",
+   "predicted_label": null,
+   "area": 24.83,
+   "centroid": [
+    -14.096,
+    15.595
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeMz",
+   "layer": "space",
+   "label": "STAIRCASE",
+   "ifc_label": "STAIRCASE",
+   "predicted_label": null,
+   "area": 14.99,
+   "centroid": [
+    -14.036,
+    -9.086
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "layer": "space",
+   "label": "Circulation",
+   "ifc_label": "Circulation",
+   "predicted_label": null,
+   "area": 360.13,
+   "centroid": [
+    -8.063,
+    0.63
+   ],
+   "parent": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "inferred",
+   "verdict": "correct",
+   "bulk": true
+  },
+  {
+   "id": "1ZGO8hrFCHqw0v0026FpFv",
+   "layer": "storey",
+   "label": "FIRST FLOOR",
+   "elevation": 4.9,
+   "parent": "model_0",
+   "provenance": "ifc"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeGp",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "LIVING ROOM",
+   "predicted_label": null,
+   "area": 10.03,
+   "centroid": [
+    -4.089,
+    17.751
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeG$",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "LIVING ROOM",
+   "predicted_label": null,
+   "area": 10.4,
+   "centroid": [
+    -7.971,
+    17.751
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeGw",
+   "layer": "space",
+   "label": "BATH",
+   "ifc_label": "BATH",
+   "predicted_label": null,
+   "area": 4.59,
+   "centroid": [
+    -10.846,
+    17.751
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeGv",
+   "layer": "space",
+   "label": "WASH BASIN",
+   "ifc_label": "WASH BASIN",
+   "predicted_label": null,
+   "area": 3.24,
+   "centroid": [
+    -12.396,
+    17.751
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeJ4",
+   "layer": "space",
+   "label": "MASTER BEDROOM",
+   "ifc_label": "MASTER BEDROOM",
+   "predicted_label": null,
+   "area": 18.64,
+   "centroid": [
+    -14.596,
+    15.683
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeJ3",
+   "layer": "space",
+   "label": "STAIRCASE",
+   "ifc_label": "STAIRCASE",
+   "predicted_label": null,
+   "area": 11.09,
+   "centroid": [
+    -14.536,
+    10.214
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeI0",
+   "layer": "space",
+   "label": "MASTER BEDROOM",
+   "ifc_label": "MASTER BEDROOM",
+   "predicted_label": null,
+   "area": 20.85,
+   "centroid": [
+    -14.596,
+    4.339
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeIF",
+   "layer": "space",
+   "label": "MASTER BEDROOM",
+   "ifc_label": "MASTER BEDROOM",
+   "predicted_label": null,
+   "area": 20.31,
+   "centroid": [
+    -14.596,
+    -3.311
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeD5",
+   "layer": "space",
+   "label": "MASTER BEDROOM",
+   "ifc_label": "MASTER BEDROOM",
+   "predicted_label": null,
+   "area": 18.16,
+   "centroid": [
+    -14.596,
+    -14.468
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeD0",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "LIVING ROOM",
+   "predicted_label": null,
+   "area": 7.58,
+   "centroid": [
+    -11.496,
+    -16.536
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeDF",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "LIVING ROOM",
+   "predicted_label": null,
+   "area": 9.73,
+   "centroid": [
+    -7.971,
+    -16.536
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "0MyMB1s_P4Zh6OoNQiQeDA",
+   "layer": "space",
+   "label": "BEDROOM",
+   "ifc_label": "LIVING ROOM",
+   "predicted_label": null,
+   "area": 9.38,
+   "centroid": [
+    -4.089,
+    -16.536
+   ],
+   "parent": "1ZGO8hrFCHqw0v0026FpFv",
+   "provenance": "ifc",
+   "verdict": "correct"
+  },
+  {
+   "id": "3qzZvSoWj5DvkOKdRuHvA4",
+   "layer": "storey",
+   "label": "L3",
+   "elevation": 9.8,
+   "parent": "model_0",
+   "provenance": "ifc"
+  },
+  {
+   "id": "EXT-3qzZvSoWj5DvkOKdRuHvA4",
+   "layer": "space",
+   "label": "Terrace",
+   "ifc_label": "Open Floor Plate",
+   "predicted_label": null,
+   "area": 50.6,
+   "centroid": [
+    -14.696,
+    1.073
+   ],
+   "parent": "3qzZvSoWj5DvkOKdRuHvA4",
+   "provenance": "inferred",
+   "verdict": "correct",
+   "bulk": true
+  },
+  {
+   "id": "3eEaxf5vn7$AIHeY5Zse4T",
+   "layer": "storey",
+   "label": "Mumti",
+   "elevation": 11.8,
+   "parent": "model_0",
+   "provenance": "ifc"
+  }
+ ],
+ "edges": [
+  {
+   "a": "model_0",
+   "b": "2JF4e6axWHqu3u0C1FZlmi",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMC",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMB",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMM",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeML",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMG",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMV",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMQ",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMZ",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMk",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMj",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMe",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMt",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeM_",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMz",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "2JF4e6axWHqu3u0C1FZlmi",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "model_0",
+   "b": "1ZGO8hrFCHqw0v0026FpFv",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeGp",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeG$",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeGw",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeGv",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeJ4",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeJ3",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeI0",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeIF",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeD5",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeD0",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeDF",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "1ZGO8hrFCHqw0v0026FpFv",
+   "b": "0MyMB1s_P4Zh6OoNQiQeDA",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "model_0",
+   "b": "3qzZvSoWj5DvkOKdRuHvA4",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "3qzZvSoWj5DvkOKdRuHvA4",
+   "b": "EXT-3qzZvSoWj5DvkOKdRuHvA4",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "model_0",
+   "b": "3eEaxf5vn7$AIHeY5Zse4T",
+   "relation": "contains",
+   "provenance": "ifc"
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMC",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMB",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMM",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeML",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMG",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMV",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMQ",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1.28
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMZ",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMk",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "width": 0.44
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMZ",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1.28
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMe",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMj",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "width": 0.44
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMe",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "width": 1.28
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMt",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "open_passage",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 2.23
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeM_",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "connected_by_door",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 1.28
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMz",
+   "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
+   "relation": "open_passage",
+   "storey": "2JF4e6axWHqu3u0C1FZlmi",
+   "provenance": "ifc+annotator",
+   "bulk": true,
+   "width": 0.62
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeJ3",
+   "b": "0MyMB1s_P4Zh6OoNQiQeMt",
+   "relation": "vertically_connected",
+   "kind": "stair",
+   "provenance": "ifc+annotator"
+  },
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeJ3",
+   "b": "EXT-3qzZvSoWj5DvkOKdRuHvA4",
+   "relation": "vertically_connected",
+   "kind": "stair",
+   "provenance": "ifc+annotator"
+  }
+ ],
+ "held_out": [
+  {
+   "a": "0MyMB1s_P4Zh6OoNQiQeMz",
+   "b": "EXT-1ZGO8hrFCHqw0v0026FpFv-r00",
+   "kind": "vertical",
+   "why": "endpoint room not confirmed"
+  }
+ ],
+ "requests": [],
+ "missing_rooms": [
+  {
+   "id": "x13ks4zc5",
+   "storey": "1ZGO8hrFCHqw0v0026FpFv",
+   "x": -14.89,
+   "y": -9.52,
+   "label": "STAIRCASE"
+  },
+  {
+   "id": "xqpqg1gzr",
+   "storey": "3qzZvSoWj5DvkOKdRuHvA4",
+   "x": -14.88,
+   "y": 9.52,
+   "label": "STAIRCASE"
+  },
+  {
+   "id": "xrxbvof4o",
+   "storey": "3qzZvSoWj5DvkOKdRuHvA4",
+   "x": -14.82,
+   "y": -9.57,
+   "label": "STAIRCASE"
+  }
+ ]
+}

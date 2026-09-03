@@ -109,7 +109,7 @@ console.log("\n-- the model list and the plan --");
 const models = await page.evaluate(() => document.getElementById("modelSel").options.length);
 ok(`the model list is populated (${models})`, models > 0);
 
-const rooms = await page.evaluate(() => document.querySelectorAll("#gRooms polygon").length);
+const rooms = await page.evaluate(() => document.querySelectorAll("#gRooms path").length);
 ok(`the plan draws rooms (${rooms})`, rooms > 0);
 const edges = await page.evaluate(() => document.querySelectorAll("#gEdges line").length);
 ok(`the plan draws links (${edges})`, edges > 0);
@@ -119,7 +119,7 @@ ok(`the plan draws walls (${walls})`, walls > 0);
 // The plan must be framed inside the viewport, not off somewhere.
 const framed = await page.evaluate(() => {
   const svg = document.getElementById("plan").getBoundingClientRect();
-  const r = document.querySelector("#gRooms polygon").getBoundingClientRect();
+  const r = document.querySelector("#gRooms path").getBoundingClientRect();
   return r.width > 2 && r.height > 2 &&
          r.right > svg.left && r.left < svg.right &&
          r.bottom > svg.top && r.top < svg.bottom;
@@ -139,7 +139,7 @@ await page.waitForTimeout(150);
 ok("turning off the links layer clears them from the plan",
    (await page.locator("#gEdges line").count()) === 0);
 
-await page.click("#gRooms polygon:last-of-type");
+await page.click("#gRooms path:last-of-type");
 await page.waitForTimeout(120);
 ok("clicking a room opens the inspector",
    (await page.locator("#inspector .ins-title").count()) > 0);
@@ -150,7 +150,7 @@ let verdicts = await page.evaluate(() =>
   Object.values(window.BIMSGApp.state.anno.rooms).filter((r) => r.verdict).length);
 ok("pressing 1 records a verdict", verdicts === 1, `got ${verdicts}`);
 ok("the room is outlined as judged",
-   (await page.locator("#gRooms polygon.v-correct").count()) > 0);
+   (await page.locator("#gRooms path.v-correct").count()) > 0);
 
 await page.keyboard.press("Control+z");
 await page.waitForTimeout(150);
@@ -169,7 +169,7 @@ await page.keyboard.press("Escape");
 await page.keyboard.press("a");
 /* Rooms are drawn largest first so small ones stay clickable, which means the
    last two in the list are the ones guaranteed not to be covered. */
-const polys = page.locator("#gRooms polygon");
+const polys = page.locator("#gRooms path");
 const nRooms = await polys.count();
 await polys.nth(nRooms - 1).click();
 await page.waitForTimeout(120);

@@ -19,6 +19,29 @@
 const SVGNS = "http://www.w3.org/2000/svg";
 const VERDICTS = ["correct", "spurious", "unsure", "merge", "split"];
 const EDGE_VERDICTS = ["correct", "spurious", "unsure"];
+
+/* What each verdict is called on screen, and what it means for the thing being
+ * judged. The stored values stay as they are -- "spurious" is what compose.py
+ * and every annotation file already use -- but "spurious" is jargon that read
+ * as "wrong somehow" rather than "this does not exist", so only the display
+ * changes. A room and a link fail in different ways, hence two glossaries. */
+const VERDICT_TEXT = {
+  room: {
+    correct:  ["Real room", "a real room, and its outline is about right"],
+    spurious: ["Not a room", "there is no room here — a shaft, a void, or an artefact"],
+    unsure:   ["Unsure", "you genuinely cannot tell — better than a guess"],
+    merge:    ["Merge", "this and a neighbour are really one room"],
+    split:    ["Split", "this covers several real rooms"],
+  },
+  link: {
+    correct:  ["Can walk", "you can go straight between these two rooms"],
+    spurious: ["Cannot walk", "there is no way through — a wall, a window, or it runs via a third room"],
+    unsure:   ["Unsure", "you genuinely cannot tell — better than a guess"],
+  },
+};
+function verdictText(kind, v) {
+  return (VERDICT_TEXT[kind] || VERDICT_TEXT.room)[v] || [v, ""];
+}
 const AUTOSAVE_MS = 20000;
 const MAX_HISTORY = 120;
 
@@ -303,6 +326,15 @@ function gotoStorey(i) {
 
 function poly(points) { return points.map((p) => p.join(",")).join(" "); }
 
+/* A room is drawn as a path, not a polygon, because a recovered circulation
+ * region is the space *between* rooms and therefore has a hole for each room it
+ * surrounds. Even-odd fill makes those holes actually holes, so the region no
+ * longer paints over the rooms inside it. */
+function roomPath(r) {
+  const sub = (pts) => "M" + pts.map((p) => p.join(",")).join("L") + "Z";
+  return [sub(r.polygon), ...(r.holes || []).map(sub)].join(" ");
+}
+
 /** Every vertical link, predicted and added, as one list. */
 function allVertical() {
   const out = (S.plan.vertical || []).map((v) => ({
@@ -334,8 +366,9 @@ function render() {
     // Largest first, so a big circulation region cannot bury the small rooms
     // that sit on top of it and make them unclickable.
     for (const r of [...st.rooms].sort((a, b) => b.area - a.area)) {
-      const e = document.createElementNS(SVGNS, "polygon");
-      e.setAttribute("points", poly(r.polygon));
+      const e = document.createElementNS(SVGNS, "path");
+      e.setAttribute("d", roomPath(r));
+      e.setAttribute("fill-rule", "evenodd");
       const v = S.anno.rooms[r.id]?.verdict;
       const pending = S.edgeFrom?.id === r.id || S.vertFrom?.id === r.id;
       e.setAttribute("class", [
@@ -655,12 +688,19 @@ function deleteSelected() {
   }
 }
 
-function verdictButtons(list, current, note) {
+function verdictButtons(list, current, note, kind) {
   return `<div class="vbtns">
-    ${list.map((v, i) => `<button class="vbtn ${v} ${current === v ? "on" : ""}"
-       data-v="${v}" title="key ${i + 1}"><span class="dot"
-       style="background:var(--v-${v})"></span>${v}</button>`).join("")}
-  </div>` + (note ? `<div class="note">${note}</div>` : "");
+    ${list.map((v, i) => {
+      const [label, meaning] = verdictText(kind || "room", v);
+      return `<button class="vbtn ${v} ${current === v ? "on" : ""}"
+         data-v="${v}" title="${esc(meaning)}  (key ${i + 1})"><span class="dot"
+         style="background:var(--v-${v})"></span>${esc(label)}</button>`;
+    }).join("")}
+  </div>
+  <div class="vlegend">${list.map((v, i) => {
+    const [label, meaning] = verdictText(kind || "room", v);
+    return `<div><kbd>${i + 1}</kbd><b>${esc(label)}</b> — ${esc(meaning)}</div>`;
+  }).join("")}</div>` + (note ? `<div class="note">${note}</div>` : "");
 }
 
 function renderInspector() {
@@ -689,7 +729,7 @@ function renderInspector() {
       <div class="ins-row"><span>area</span><span>${r.area} m²</span></div>
       <div class="ins-row"><span>storey</span><span>${esc(storey().name)}</span></div>
       <div class="ins-row"><span>id</span><span title="${esc(r.id)}">${esc(r.id.slice(0, 14))}…</span></div>
-      ${verdictButtons(VERDICTS, a.verdict, "")}
+      ${verdictButtons(VERDICTS, a.verdict, "", "room")}
       <div class="field">
         <label>${hasPred
           ? "correct functional label — edit if the guess is wrong, leave to confirm"
@@ -766,7 +806,7 @@ function renderInspector() {
         : verdictButtons(EDGE_VERDICTS, a.verdict,
             "Can you actually get between these two floors here? This is what " +
             "chains the storeys into one building graph, so a wrong answer " +
-            "disconnects the whole model.")}`;
+            "disconnects the whole model.", "link")}`;
     if (v.added) $("delBtn").onclick = deleteSelected;
     else wireVerdicts(box, a.verdict);
     return;
@@ -784,7 +824,7 @@ function renderInspector() {
     ${ed?.width ? `<div class="ins-row"><span>door width</span><span>${ed.width} m</span></div>` : ""}
     ${verdictButtons(EDGE_VERDICTS, a.verdict,
       "Is this passage real? Connectivity is what IFC omits entirely, so these " +
-      "judgements are the most valuable ones here.")}`;
+      "judgements are the most valuable ones here.", "link")}`;
   wireVerdicts(box, a.verdict);
 }
 
