@@ -118,8 +118,8 @@ def load_pairs(inbox: str | None = None):
 def _judged(anno):
     """Every judgement as key -> verdict, for agreement scoring.
 
-    Normalised through compose's aliases, so a file written before the verdict
-    words became specific is not counted as disagreeing with one written after.
+    Read through compose's accessors, so an unrecognised word is dropped rather
+    than silently counted as a category of its own.
     """
     out = {}
     for rid, v in (anno.get("rooms") or {}).items():

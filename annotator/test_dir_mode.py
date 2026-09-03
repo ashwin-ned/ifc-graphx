@@ -111,12 +111,12 @@ ok("IFC file is reachable for the 3D view", !!f && typeof f.arrayBuffer === "fun
 /* --- annotate and confirm it lands on disk ------------------------------ */
 const a = await store.getAnnotation(name, "dana");
 for (const st of plan.storeys) {
-  for (const r of st.rooms) a.rooms[r.id] = { verdict: "correct" };
+  for (const r of st.rooms) a.rooms[r.id] = { verdict: "real" };
   for (const e of st.edges)
-    a.edges[BIMSGCompose.key(e.a, e.b)] = { verdict: "correct", a: e.a, b: e.b };
+    a.edges[BIMSGCompose.key(e.a, e.b)] = { verdict: "passable", a: e.a, b: e.b };
 }
 for (const v of (plan.vertical || []))
-  a.vertical[BIMSGCompose.key(v.a, v.b)] = { verdict: "correct", a: v.a, b: v.b };
+  a.vertical[BIMSGCompose.key(v.a, v.b)] = { verdict: "passable", a: v.a, b: v.b };
 await store.saveAnnotation(name, "dana", a);
 
 const onDisk = path.join(DIR, BIMSGDir.ANNO_FILE);

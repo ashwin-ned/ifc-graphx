@@ -19,12 +19,9 @@
 const SVGNS = "http://www.w3.org/2000/svg";
 /* Verdicts say what they mean.
  *
- * These were "correct" and "spurious" for both rooms and links, which made a
- * saved file say `"verdict": "spurious"` whether the annotator meant "there is
- * no room here" or "you cannot walk between these". The distinction was only
- * recoverable from which dictionary the entry sat in. The words are now
- * specific to what is being judged, and ALIASES reads the old ones so existing
- * annotations keep working.
+ * A room and a link fail in different ways, so they do not share words: a
+ * saved file should say what was meant without the reader having to know which
+ * dictionary the entry came from.
  */
 const VERDICTS = ["real", "not_a_room", "unsure", "merge", "split"];
 const EDGE_VERDICTS = ["passable", "not_passable", "unsure"];
@@ -40,10 +37,6 @@ const VCLASS_MAP = { real: "correct", passable: "correct",
                      not_a_room: "spurious", not_passable: "spurious" };
 function VCLASS(v) { return VCLASS_MAP[v] || v; }
 
-function normVerdict(kind, v) {
-  if (!v) return v;
-  return (ALIASES[kind === "room" ? "room" : "link"] || {})[v] || v;
-}
 
 /* What each verdict is called on screen, and what it means for the thing being
  * judged. The stored values stay as they are -- "spurious" is what compose.py
@@ -263,12 +256,7 @@ async function loadAnnotation() {
     // Older files predate stable ids; without one, deletion cannot target a row.
     for (const k of ["added_edges", "added_vertical", "missing_rooms"])
       S.anno[k].forEach((r) => { if (!r.id) r.id = uid(); });
-    // ...and predate the specific verdict words.
-    for (const v of Object.values(S.anno.rooms))
-      if (v.verdict) v.verdict = normVerdict("room", v.verdict);
-    for (const set of [S.anno.edges, S.anno.vertical])
-      for (const v of Object.values(set))
-        if (v.verdict) v.verdict = normVerdict("link", v.verdict);
+
   } catch (e) { S.anno = emptyAnno(); }
   setDirty(false);
 }
@@ -301,7 +289,6 @@ setInterval(() => { if (S.dirty && annotatorName() && S.model) save(true); }, AU
 /* ------------------------------------------------------------- rendering */
 
 function storey() { return S.plan.storeys[S.storey]; }
-function storeyById(gid) { return S.plan.storeys.find((s) => s.gid === gid); }
 function roomAnywhere(id) {
   for (const st of S.plan.storeys) {
     const r = st.rooms.find((x) => x.id === id);

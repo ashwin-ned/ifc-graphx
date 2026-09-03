@@ -48,7 +48,6 @@ import { chromium } from "PLAYWRIGHT_PATH/index.mjs";
 
 const BASE = process.argv[2];
 const SHOTS = process.argv[3];
-const IFC_MODEL = process.argv[4] || "";
 
 let failures = 0;
 const ok = (m, c, extra) => {

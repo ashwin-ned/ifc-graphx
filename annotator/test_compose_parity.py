@@ -29,12 +29,10 @@ sys.path.insert(0, HERE)
 from compose import compose, connectivity_gt   # noqa: E402
 
 NODE = os.environ.get("NODE_BIN") or "node"
-# Both vocabularies on purpose: the specific words the tool writes now, and the
-# older generic ones, which both composers must still read identically.
-VERDICTS = ["real", "not_a_room", "unsure", "merge", "split", None,
-            "correct", "spurious"]
-LINK_VERDICTS = ["passable", "not_passable", "unsure", None,
-                 "correct", "spurious"]
+# Includes a word neither side knows, so the two must agree on ignoring it
+# rather than one of them inventing a category.
+VERDICTS = ["real", "not_a_room", "unsure", "merge", "split", None, "nonsense"]
+LINK_VERDICTS = ["passable", "not_passable", "unsure", None, "nonsense"]
 LINK_KINDS = ["connected_by_door", "open_passage", None]
 
 DRIVER = r"""
@@ -156,6 +154,12 @@ def main():
                 for j, r in enumerate(st["rooms"]):
                     if (i + j) % 7 == 3:
                         r["source"] = "projected" if j % 2 else "recovered"
+                        # Rooms resolved from a pin carry the evidence that
+                        # justifies them, which both composers must pass on.
+                        r["from_pin"] = f"pin{i}{j}"
+                        r["evidence"] = {"strategy": "project",
+                                         "from_storey_name": "Level 0",
+                                         "notes": []}
             # node reads the plan from disk, so the staged copy has to be
             # written out -- handing it the original path compares two
             # different inputs and fails for a reason that is not a drift.

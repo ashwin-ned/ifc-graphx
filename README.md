@@ -82,8 +82,30 @@ a node. Refusing is the point.
 
 Nothing is asserted: resolved rooms carry `source: "projected"`/`"recovered"`
 plus the evidence they came from, draw in amber, and their links are marked
-`proposed`. Hand the output folder back for a second pass and judge them like
-anything else.
+`proposed`. The evidence rides through onto the graph node, so a room can be
+audited later against what justified it.
+
+Hand the output back for a second pass by pointing either build at it:
+
+```bash
+python annotator/app.py --plans annotator/data-resolved
+python annotator/build_site.py --plans annotator/data-resolved --out dist
+```
+
+## The verdict vocabulary
+
+A room and a link fail in different ways, so they do not share words — a saved
+file says what was meant without the reader having to know which dictionary the
+entry came from.
+
+| | words |
+|---|---|
+| rooms | `real`, `not_a_room`, `unsure`, `merge`, `split` |
+| links | `passable`, `not_passable`, `unsure` |
+
+An added link also records `kind`: `connected_by_door` or `open_passage`. A door
+can be shut and an archway cannot, which is the whole difference to anything
+planning a route, so the tool asks rather than guessing.
 
 ## Collecting the results
 

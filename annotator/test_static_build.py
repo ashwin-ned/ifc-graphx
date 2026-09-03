@@ -75,12 +75,12 @@ ok("absent annotation returns an empty shape",
    a && Object.keys(a.rooms).length === 0 && Array.isArray(a.added_vertical));
 
 for (const st of plan.storeys) {
-  for (const r of st.rooms) a.rooms[r.id] = { verdict: "correct" };
+  for (const r of st.rooms) a.rooms[r.id] = { verdict: "real" };
   for (const e of st.edges)
-    a.edges[BIMSGCompose.key(e.a, e.b)] = { verdict: "correct", a: e.a, b: e.b };
+    a.edges[BIMSGCompose.key(e.a, e.b)] = { verdict: "passable", a: e.a, b: e.b };
 }
 for (const v of (plan.vertical || []))
-  a.vertical[BIMSGCompose.key(v.a, v.b)] = { verdict: "correct", a: v.a, b: v.b };
+  a.vertical[BIMSGCompose.key(v.a, v.b)] = { verdict: "passable", a: v.a, b: v.b };
 await store.saveAnnotation(name, "tester", a);
 
 const back = await store.getAnnotation(name, "tester");

@@ -39,22 +39,21 @@ def _key(a: str, b: str) -> str:
     return f"{a}|{b}" if a < b else f"{b}|{a}"
 
 
-# The verdict words used to be "correct"/"spurious" for both rooms and links,
-# which made a saved file ambiguous about what was meant. They are specific
-# now; these read the old ones so annotations recorded before the change still
-# compose to exactly the same graph.
-_ROOM_ALIAS = {"correct": "real", "spurious": "not_a_room"}
-_LINK_ALIAS = {"correct": "passable", "spurious": "not_passable"}
+# The vocabulary, in one place. A room and a link fail in different ways, so
+# they do not share words: a file should say what was meant without needing to
+# know which dictionary the entry came from.
+ROOM_VERDICTS = ("real", "not_a_room", "unsure", "merge", "split")
+LINK_VERDICTS = ("passable", "not_passable", "unsure")
 
 
 def room_verdict(a: dict):
     v = a.get("verdict")
-    return _ROOM_ALIAS.get(v, v)
+    return v if v in ROOM_VERDICTS else None
 
 
 def link_verdict(a: dict):
     v = a.get("verdict")
-    return _LINK_ALIAS.get(v, v)
+    return v if v in LINK_VERDICTS else None
 
 
 def compose(plan: dict, anno: dict) -> dict:
@@ -123,6 +122,11 @@ def compose(plan: dict, anno: dict) -> dict:
                                ("ifc", "inferred", "projected", "recovered")
                                else "inferred"),
                 "verdict": v,
+                # What justified this room existing at all. A projected or
+                # wall-recovered room is only as good as its evidence, and a
+                # node that does not carry it cannot be audited later.
+                **({"evidence": r["evidence"]} if r.get("evidence") else {}),
+                **({"from_pin": r["from_pin"]} if r.get("from_pin") else {}),
                 # Whether this was judged on its own or swept in with the rest
                 # of a floor. A swept verdict is weaker evidence and anything
                 # measuring against this data should be able to tell.
@@ -166,10 +170,10 @@ def compose(plan: dict, anno: dict) -> dict:
                              "why": "endpoint room not confirmed"})
             continue
         counts["links_kept"] += 1
-        # An added link used to become a door unconditionally, which asserted a
-        # door leaf the annotator never claimed. They pick now; anything saved
-        # before that choice existed keeps the old reading.
-        rel = e.get("kind") or "connected_by_door"
+        # The annotator says whether it is a door or an open threshold: a door
+        # can be shut and an archway cannot, which is the whole difference to
+        # anything planning a route.
+        rel = e.get("kind")
         if rel not in ("connected_by_door", "open_passage"):
             rel = "connected_by_door"
         edges.append({"a": e["a"], "b": e["b"], "relation": rel,

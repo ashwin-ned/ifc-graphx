@@ -38,10 +38,15 @@ ASSETS = ["index.html", "style.css", "app.js", "compose.js", "store.js",
           "fsdir.js", "viewer3d.js"]
 
 
-def build(out: str, quiet: bool = False, with_ifc: bool = True) -> int:
-    plans = sorted(glob.glob(os.path.join(DATA, "*.plan.json")))
+def build(out: str, quiet: bool = False, with_ifc: bool = True,
+          plans_dir: str | None = None) -> int:
+    # `resolve_pins.py` writes an augmented plan set to its own directory;
+    # without this the only way to publish it was to copy over annotator/data.
+    src = plans_dir or DATA
+    plans = sorted(glob.glob(os.path.join(src, "*.plan.json")))
     if not plans:
         print("!! no plans in annotator/data — nothing to publish")
+        print(f"   looked in {src}")
         print("   run: python main/export_plans.py 'dataset/test_set/*.ifc' "
               "--out annotator/data")
         return 1
@@ -80,7 +85,7 @@ def build(out: str, quiet: bool = False, with_ifc: bool = True) -> int:
         # check available to someone working from the hosted site rather than
         # from a folder on their own disk; its size goes into the manifest so
         # the page can warn before pulling 29 MB over a phone connection.
-        src_ifc = os.path.join(DATA, f"{name}.ifc")
+        src_ifc = os.path.join(src, f"{name}.ifc")
         size = 0
         if with_ifc and os.path.exists(src_ifc):
             shutil.copy2(src_ifc, os.path.join(out, "data", f"{name}.ifc"))
@@ -134,8 +139,11 @@ def main():
     ap.add_argument("--quiet", action="store_true")
     ap.add_argument("--no-ifc", action="store_true",
                     help="leave the IFC files out; the 3D view needs them")
+    ap.add_argument("--plans", help="plan directory to publish "
+                                    "(default annotator/data)")
     args = ap.parse_args()
-    return build(args.out, args.quiet, with_ifc=not args.no_ifc)
+    return build(args.out, args.quiet, with_ifc=not args.no_ifc,
+                 plans_dir=args.plans)
 
 
 if __name__ == "__main__":

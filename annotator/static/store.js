@@ -29,9 +29,30 @@
   /* ------------------------------------------------------------ server */
 
   class ServerStore {
-    constructor() { this.mode = "server"; this.canCollect = true; }
+    constructor() {
+      this.mode = "server";
+      this.canCollect = true;
+      // hasIfc() is called synchronously while rendering, so the last listing
+      // is kept rather than re-fetched.
+      this._models = new Map();
+    }
 
-    async listModels() { return (await fetch("api/models")).json(); }
+    async listModels() {
+      const list = await (await fetch("api/models")).json();
+      this._models = new Map(list.map((m) => [m.model, m]));
+      return list;
+    }
+
+    _entry(name) { return this._models.get(name) || {}; }
+
+    hasIfc(name) { return !!this._entry(name).hasIfc; }
+    ifcBytes(name) { return this._entry(name).ifcBytes || 0; }
+
+    async getIfcFile(name) {
+      const r = await fetch(`api/ifc/${name}`);
+      if (!r.ok) throw new Error(`could not load ${name}.ifc (${r.status})`);
+      return r.blob();
+    }
     async getPlan(name) { return (await fetch(`api/plan/${name}`)).json(); }
 
     async getAnnotation(model, who) {

@@ -18,13 +18,13 @@
 
   function key(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
 
-  // The verdict words used to be "correct"/"spurious" for both rooms and
-  // links. They are specific now; these read the old ones so annotations
-  // recorded before the change compose to exactly the same graph.
-  const ROOM_ALIAS = { correct: "real", spurious: "not_a_room" };
-  const LINK_ALIAS = { correct: "passable", spurious: "not_passable" };
-  const roomVerdict = (a) => ROOM_ALIAS[a.verdict] || a.verdict;
-  const linkVerdict = (a) => LINK_ALIAS[a.verdict] || a.verdict;
+  // The vocabulary, in one place. A room and a link fail in different ways, so
+  // they do not share words: a file should say what was meant without needing
+  // to know which dictionary the entry came from.
+  const ROOM_VERDICTS = ["real", "not_a_room", "unsure", "merge", "split"];
+  const LINK_VERDICTS = ["passable", "not_passable", "unsure"];
+  const roomVerdict = (a) => (ROOM_VERDICTS.includes(a.verdict) ? a.verdict : null);
+  const linkVerdict = (a) => (LINK_VERDICTS.includes(a.verdict) ? a.verdict : null);
 
   function compose(plan, anno) {
     const roomsV = anno.rooms || {};
@@ -80,6 +80,10 @@
             .includes(r.source) ? r.source : "inferred",
           verdict: v,
         };
+        // What justified this room existing at all: a projected or
+        // wall-recovered room is only as good as its evidence.
+        if (r.evidence) n.evidence = r.evidence;
+        if (r.from_pin) n.from_pin = r.from_pin;
         // Judged on its own, or swept in with the rest of a floor.
         if (a.bulk) n.bulk = true;
         if (a.note) n.note = a.note;
@@ -120,10 +124,9 @@
         continue;
       }
       counts.links_kept += 1;
-      // An added link used to become a door unconditionally, asserting a door
-      // leaf the annotator never claimed. They pick now; older saves keep the
-      // old reading.
-      let rel = e.kind || "connected_by_door";
+      // The annotator says whether it is a door or an open threshold: a door
+      // can be shut and an archway cannot, which matters to a route planner.
+      let rel = e.kind;
       if (rel !== "connected_by_door" && rel !== "open_passage")
         rel = "connected_by_door";
       edges.push({ a: e.a, b: e.b, relation: rel,

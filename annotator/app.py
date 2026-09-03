@@ -28,8 +28,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from compose import compose
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(HERE, "data")
-ANNO = os.path.join(HERE, "annotations")
+# Overridable so a plan set augmented by resolve_pins.py can be served without
+# copying it over the originals.
+DATA = os.environ.get("BIMSG_PLANS") or os.path.join(HERE, "data")
+ANNO = os.environ.get("BIMSG_ANNOTATIONS") or os.path.join(HERE, "annotations")
 
 # `static_url_path=""` serves the app's files from the root, so index.html can
 # reference them relatively ("app.js", not "/static/app.js"). That matters
@@ -77,9 +79,16 @@ def models():
             except Exception:
                 done[who] = 0
         n_vert = len(doc.get("vertical") or [])
+        # The 3D view needs to know an IFC is available before it offers the
+        # tab. Without this the server build could never show the model, even
+        # with the files sitting in annotator/data next to the plans.
+        ifc = os.path.join(DATA, f"{name}.ifc")
+        has_ifc = os.path.exists(ifc)
         out.append({"model": name, "storeys": len(doc["storeys"]),
                     "rooms": n_rooms, "edges": n_edges, "vertical": n_vert,
-                    "items": n_rooms + n_edges + n_vert, "annotated": done})
+                    "items": n_rooms + n_edges + n_vert, "annotated": done,
+                    "hasIfc": has_ifc,
+                    "ifcBytes": os.path.getsize(ifc) if has_ifc else 0})
     return jsonify(out)
 
 
@@ -89,6 +98,19 @@ def plan(model):
     if not os.path.exists(p):
         return jsonify({"error": "not found"}), 404
     return send_from_directory(DATA, f"{model}.plan.json")
+
+
+@app.route("/api/ifc/<model>")
+def ifc(model):
+    """The source IFC, for the 3D view. Streamed rather than read into memory:
+    these run to tens of megabytes."""
+    try:
+        name = f"{_safe(model)}.ifc"
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    if not os.path.exists(os.path.join(DATA, name)):
+        return jsonify({"error": "no IFC for this model"}), 404
+    return send_from_directory(DATA, name, mimetype="application/octet-stream")
 
 
 @app.route("/api/annotation/<model>/<annotator>", methods=["GET"])
@@ -175,7 +197,13 @@ def main():
     ap.add_argument("--host", default="127.0.0.1",
                     help="use 0.0.0.0 to let other machines reach it")
     ap.add_argument("--debug", action="store_true")
+    ap.add_argument("--plans", help="plan directory to serve "
+                                    "(default annotator/data)")
     args = ap.parse_args()
+
+    global DATA
+    if args.plans:
+        DATA = os.path.abspath(args.plans)
 
     os.makedirs(ANNO, exist_ok=True)
     n = len(glob.glob(os.path.join(DATA, "*.plan.json")))
