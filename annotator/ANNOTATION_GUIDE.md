@@ -138,8 +138,8 @@ so it never hides the thing underneath.
 | **Violet** dashed room | The file did *not* say this room exists — our pipeline worked it out from the walls. Treat these with extra suspicion. |
 | **Grey** shapes | Walls. |
 | **Orange** dots | Doors. |
-| **Green** line | A link the model thinks is a doorway. |
-| **Amber** dashed line | A link the model thinks is an open passage (an archway, or an opening with no door). |
+| **Green** line | A door link — there is a door in the wall between the two rooms. |
+| **Amber** dashed line | An open passage — an archway or gap with no door in it. |
 | **Violet** dotted line / dot above a room | A floor-to-floor link — a stair or lift. |
 | **Pink** line | A link *you* added. |
 
@@ -173,6 +173,19 @@ buttons say which.
 | <kbd>1</kbd> | Can walk | You can go straight between these two rooms. |
 | <kbd>2</kbd> | Cannot walk | There is no way through — a wall, a window, or the route actually goes via a third room. |
 | <kbd>3</kbd> | Unsure | You genuinely cannot tell. |
+
+### Door link or open passage?
+
+A **door link** means there is a door in the wall between the two rooms. An
+**open passage** means the opening has no door in it — an archway, or a gap.
+
+The difference matters: a door can be shut, an archway cannot. Anything
+planning a route through the building has to know which, so when you add a link
+yourself the tool asks. You can change your answer later by selecting the link.
+
+Judging a link is not about which of the two it is — <kbd>1</kbd> means you can
+walk through, whatever is in the opening. If the model called a doorway an open
+passage or the other way round, say so in the note.
 
 So key <kbd>2</kbd> always means **"this is not real"** — either the room does
 not exist, or you cannot walk that way. It is not a judgement about the room's

@@ -385,3 +385,7 @@ svg.picking{cursor:crosshair}
 .room.projected{fill:var(--v-unsure);stroke:var(--v-unsure);stroke-dasharray:.5 .22}
 .room.recovered{fill:var(--v-unsure);stroke:var(--v-unsure);stroke-dasharray:.22 .22}
 .edge.proposed{stroke:var(--v-unsure);stroke-dasharray:.5 .25}
+
+/* An added open passage is dashed like a predicted one, so the plan reads the
+   same way whoever put the link there. */
+.edge.manual-open{stroke-dasharray:.34 .2}

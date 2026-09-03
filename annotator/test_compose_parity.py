@@ -29,8 +29,13 @@ sys.path.insert(0, HERE)
 from compose import compose, connectivity_gt   # noqa: E402
 
 NODE = os.environ.get("NODE_BIN") or "node"
-VERDICTS = ["correct", "spurious", "unsure", "merge", "split", None]
-LINK_VERDICTS = ["correct", "spurious", "unsure", None]
+# Both vocabularies on purpose: the specific words the tool writes now, and the
+# older generic ones, which both composers must still read identically.
+VERDICTS = ["real", "not_a_room", "unsure", "merge", "split", None,
+            "correct", "spurious"]
+LINK_VERDICTS = ["passable", "not_passable", "unsure", None,
+                 "correct", "spurious"]
+LINK_KINDS = ["connected_by_door", "open_passage", None]
 
 DRIVER = r"""
 const fs = require("fs");
@@ -81,8 +86,10 @@ def random_anno(plan, rng):
     if len(ids) >= 2:
         for _ in range(rng.randint(0, 3)):
             a, b = rng.sample(ids, 2)
+            k = rng.choice(LINK_KINDS)
             added_e.append({"id": "a" + str(rng.randint(0, 1 << 30)), "a": a, "b": b,
-                            "storey": plan["storeys"][0]["gid"], "type": "manual"})
+                            "storey": plan["storeys"][0]["gid"], "type": "manual",
+                            **({"kind": k} if k else {})})
         for _ in range(rng.randint(0, 2)):
             a, b = rng.sample(ids, 2)
             added_v.append({"id": "v" + str(rng.randint(0, 1 << 30)), "a": a, "b": b,

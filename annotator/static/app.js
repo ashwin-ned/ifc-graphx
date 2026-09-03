@@ -17,8 +17,33 @@
  */
 
 const SVGNS = "http://www.w3.org/2000/svg";
-const VERDICTS = ["correct", "spurious", "unsure", "merge", "split"];
-const EDGE_VERDICTS = ["correct", "spurious", "unsure"];
+/* Verdicts say what they mean.
+ *
+ * These were "correct" and "spurious" for both rooms and links, which made a
+ * saved file say `"verdict": "spurious"` whether the annotator meant "there is
+ * no room here" or "you cannot walk between these". The distinction was only
+ * recoverable from which dictionary the entry sat in. The words are now
+ * specific to what is being judged, and ALIASES reads the old ones so existing
+ * annotations keep working.
+ */
+const VERDICTS = ["real", "not_a_room", "unsure", "merge", "split"];
+const EDGE_VERDICTS = ["passable", "not_passable", "unsure"];
+
+const ALIASES = {
+  room: { correct: "real", spurious: "not_a_room" },
+  link: { correct: "passable", spurious: "not_passable" },
+};
+/* One CSS class per outcome, shared by rooms and links: "real" and "passable"
+ * are both the green outline, and so on. Keeps the stylesheet from having to
+ * know about two vocabularies. */
+const VCLASS_MAP = { real: "correct", passable: "correct",
+                     not_a_room: "spurious", not_passable: "spurious" };
+function VCLASS(v) { return VCLASS_MAP[v] || v; }
+
+function normVerdict(kind, v) {
+  if (!v) return v;
+  return (ALIASES[kind === "room" ? "room" : "link"] || {})[v] || v;
+}
 
 /* What each verdict is called on screen, and what it means for the thing being
  * judged. The stored values stay as they are -- "spurious" is what compose.py
@@ -27,16 +52,16 @@ const EDGE_VERDICTS = ["correct", "spurious", "unsure"];
  * changes. A room and a link fail in different ways, hence two glossaries. */
 const VERDICT_TEXT = {
   room: {
-    correct:  ["Real room", "a real room, and its outline is about right"],
-    spurious: ["Not a room", "there is no room here — a shaft, a void, or an artefact"],
-    unsure:   ["Unsure", "you genuinely cannot tell — better than a guess"],
-    merge:    ["Merge", "this and a neighbour are really one room"],
-    split:    ["Split", "this covers several real rooms"],
+    real:       ["Real room", "a real room, and its outline is about right"],
+    not_a_room: ["Not a room", "there is no room here — a shaft, a void, or an artefact"],
+    unsure:     ["Unsure", "you genuinely cannot tell — better than a guess"],
+    merge:      ["Merge", "this and a neighbour are really one room"],
+    split:      ["Split", "this covers several real rooms"],
   },
   link: {
-    correct:  ["Can walk", "you can go straight between these two rooms"],
-    spurious: ["Cannot walk", "there is no way through — a wall, a window, or it runs via a third room"],
-    unsure:   ["Unsure", "you genuinely cannot tell — better than a guess"],
+    passable:     ["Can walk", "you can go straight between these two rooms"],
+    not_passable: ["Cannot walk", "there is no way through — a wall, a window, or it runs via a third room"],
+    unsure:       ["Unsure", "you genuinely cannot tell — better than a guess"],
   },
 };
 function verdictText(kind, v) {
@@ -238,6 +263,12 @@ async function loadAnnotation() {
     // Older files predate stable ids; without one, deletion cannot target a row.
     for (const k of ["added_edges", "added_vertical", "missing_rooms"])
       S.anno[k].forEach((r) => { if (!r.id) r.id = uid(); });
+    // ...and predate the specific verdict words.
+    for (const v of Object.values(S.anno.rooms))
+      if (v.verdict) v.verdict = normVerdict("room", v.verdict);
+    for (const set of [S.anno.edges, S.anno.vertical])
+      for (const v of Object.values(set))
+        if (v.verdict) v.verdict = normVerdict("link", v.verdict);
   } catch (e) { S.anno = emptyAnno(); }
   setDirty(false);
 }
@@ -375,7 +406,7 @@ function render() {
         "room",
         ["ifc", "inferred", "projected", "recovered"].includes(r.source)
           ? r.source : "inferred",
-        v ? "v-" + v : "",
+        v ? "v-" + VCLASS(v) : "",
         S.sel?.kind === "room" && S.sel.id === r.id ? "sel" : "",
         pending ? "pending" : "",
       ].filter(Boolean).join(" "));
@@ -410,7 +441,7 @@ function render() {
       const k = edgeKey(ed.a, ed.b);
       const v = S.anno.edges[k]?.verdict;
       draw(ed.a, ed.b, ["edge", ed.type, ed.proposed ? "proposed" : "",
-                        v ? "v-" + v : "",
+                        v ? "v-" + VCLASS(v) : "",
                         S.sel?.kind === "edge" && S.sel.id === k ? "sel" : ""]
                        .filter(Boolean).join(" "),
            () => { S.sel = { kind: "edge", id: k, a: ed.a, b: ed.b }; render(); });
@@ -418,6 +449,7 @@ function render() {
     for (const ed of S.anno.added_edges) {
       if (ed.storey !== st.gid) continue;
       draw(ed.a, ed.b, "edge manual" +
+           (ed.kind === "open_passage" ? " manual-open" : "") +
            (S.sel?.kind === "added" && S.sel.id === ed.id ? " sel" : ""),
            () => { S.sel = { kind: "added", id: ed.id }; render(); });
     }
@@ -577,13 +609,30 @@ function onRoomClick(r) {
                        : "you already added that link", "warn");
         S.edgeFrom = null; render(); return;
       }
-      mutate("add link", () => {
-        S.anno.added_edges.push({
-          id: uid(), a, b, storey: storey().gid, type: "manual",
-        });
-      });
+      const nameA = S.edgeFrom.label, nameB = r.label;
       S.edgeFrom = null;
-      banner("link added — Ctrl+Z undoes it");
+      /* Ask what kind of passage it is. A door can be shut and an open
+       * threshold cannot, which is the whole difference to anything planning a
+       * route -- so guessing it is wrong. Added links used to become doors
+       * unconditionally, which asserted a door leaf nobody had claimed. */
+      askConfirm(
+        `How do you get between ${esc(nameA)} and ${esc(nameB)}?`,
+        `<p class="muted">A <b>door</b> can be closed; an <b>open passage</b>
+         cannot. Anything planning a route through the building needs to know
+         which, so this is not something to guess at.</p>`,
+        null,
+        null,
+        [["Through a door", "connected_by_door"],
+         ["Open passage — no door", "open_passage"]],
+        (kind) => {
+          mutate("add link", () => {
+            S.anno.added_edges.push({
+              id: uid(), a, b, storey: storey().gid, type: "manual", kind,
+            });
+          });
+          banner(kind === "open_passage" ? "open passage added"
+                                         : "door link added");
+        });
     }
     return;
   }
@@ -694,9 +743,9 @@ function verdictButtons(list, current, note, kind) {
   return `<div class="vbtns">
     ${list.map((v, i) => {
       const [label, meaning] = verdictText(kind || "room", v);
-      return `<button class="vbtn ${v} ${current === v ? "on" : ""}"
+      return `<button class="vbtn ${VCLASS(v)} ${current === v ? "on" : ""}"
          data-v="${v}" title="${esc(meaning)}  (key ${i + 1})"><span class="dot"
-         style="background:var(--v-${v})"></span>${esc(label)}</button>`;
+         style="background:var(--v-${VCLASS(v)})"></span>${esc(label)}</button>`;
     }).join("")}
   </div>
   <div class="vlegend">${list.map((v, i) => {
@@ -779,9 +828,25 @@ function renderInspector() {
       <div class="ins-tier" style="background:var(--r-manual)">link you added</div>
       <div class="ins-title">${esc(nm(e.a))} ↔ ${esc(nm(e.b))}</div>
       <div class="ins-sub">not predicted by the model — you added it</div>
+      <div class="field">
+        <label>how you get between them</label>
+        <div class="vbtns">
+          <button class="vbtn ${(e.kind || "connected_by_door") === "connected_by_door" ? "on correct" : ""}"
+                  data-k="connected_by_door">Through a door</button>
+          <button class="vbtn ${e.kind === "open_passage" ? "on correct" : ""}"
+                  data-k="open_passage">Open passage</button>
+        </div>
+      </div>
       <button class="danger" id="delBtn">Delete this link</button>
-      <div class="note">Added links are yours to remove. Delete, or press
-      <b>Del</b>. <b>Ctrl+Z</b> undoes either way.</div>`;
+      <div class="note">A door can be closed and an open threshold cannot, so
+      the two are different to anything planning a route. Added links are yours
+      to remove: Delete, or press <b>Del</b>. <b>Ctrl+Z</b> undoes either way.</div>`;
+    box.querySelectorAll("[data-k]").forEach((btn) => {
+      btn.onclick = () => mutate("change link kind", () => {
+        const t = S.anno.added_edges.find((x) => x.id === e.id);
+        if (t) t.kind = btn.dataset.k;
+      });
+    });
     $("delBtn").onclick = deleteSelected;
     return;
   }
@@ -979,17 +1044,30 @@ function askText(title, def, cb) {
   };
 }
 
-function askConfirm(title, bodyHtml, yesLabel, cb) {
+/* A yes/no dialog, or a pick-one when `choices` is given as [label, value]
+ * pairs. Cancel always leaves everything untouched. */
+function askConfirm(title, bodyHtml, yesLabel, cb, choices, pick) {
+  const buttons = choices
+    ? choices.map(([label], i) =>
+        `<button class="primary" id="dlgPick${i}" style="margin:0">${esc(label)}</button>`)
+        .join("")
+    : `<button class="primary" id="dlgYes" style="margin:0">${esc(yesLabel)}</button>`;
   $("dlg").innerHTML = `
     <h3>${esc(title)}</h3>
     ${bodyHtml}
     <div class="row2">
       <button class="ghost" id="dlgNo" style="margin:0">Cancel</button>
-      <button class="primary" id="dlgYes" style="margin:0">${esc(yesLabel)}</button>
+      ${buttons}
     </div>`;
   $("mask").className = "mask on";
   $("dlgNo").onclick = closeDlg;
-  $("dlgYes").onclick = () => { closeDlg(); cb(); };
+  if (choices) {
+    choices.forEach(([, value], i) => {
+      $(`dlgPick${i}`).onclick = () => { closeDlg(); pick(value); };
+    });
+  } else {
+    $("dlgYes").onclick = () => { closeDlg(); cb(); };
+  }
 }
 
 /* Mark everything still unjudged on this floor as correct.
@@ -1034,10 +1112,10 @@ function sweepFloor() {
       mutate(`mark rest of ${st.name} correct`, () => {
         for (const r of rooms)
           S.anno.rooms[r.id] = { ...(S.anno.rooms[r.id] || {}),
-                                 verdict: "correct", bulk: true };
+                                 verdict: "real", bulk: true };
         for (const e of links)
           S.anno.edges[edgeKey(e.a, e.b)] = {
-            verdict: "correct", a: e.a, b: e.b, bulk: true };
+            verdict: "passable", a: e.a, b: e.b, bulk: true };
       });
       banner(`${rooms.length} rooms and ${links.length} links marked correct`);
     });
@@ -1589,9 +1667,16 @@ function download(name, text) {
   URL.revokeObjectURL(a.href);
 }
 
-$("btnRaw").onclick = () =>
-  download(`${S.model}__${annotatorName() || "anon"}.json`,
-           JSON.stringify(S.anno, null, 1));
+$("btnRaw").onclick = () => {
+  const who = annotatorName() || "anon";
+  // Stamp the identity into the file, not just the filename. The collector
+  // reads model and annotator from inside deliberately -- a filename is the
+  // one thing that changes on the way back -- so a raw download without them
+  // was silently unusable.
+  const doc = { ...S.anno, model: S.model, annotator: who,
+                updated: new Date().toISOString().replace(/\.\d+Z$/, "Z") };
+  download(`${S.model}__${who}.json`, JSON.stringify(doc, null, 1));
+};
 
 $("btnExport").onclick = async () => {
   const who = annotatorName();

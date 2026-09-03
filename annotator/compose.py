@@ -13,8 +13,9 @@ the dataset.
 
 Verdict semantics, deliberately conservative:
 
-    correct   -> in the graph
-    spurious  -> not in the graph
+    real / passable      -> in the graph
+    not_a_room /
+    not_passable         -> not in the graph
     unsure    -> not in the graph, but recorded in `held_out` so it can be
                  routed to a second annotator instead of silently becoming a
                  negative
@@ -36,6 +37,24 @@ from __future__ import annotations
 
 def _key(a: str, b: str) -> str:
     return f"{a}|{b}" if a < b else f"{b}|{a}"
+
+
+# The verdict words used to be "correct"/"spurious" for both rooms and links,
+# which made a saved file ambiguous about what was meant. They are specific
+# now; these read the old ones so annotations recorded before the change still
+# compose to exactly the same graph.
+_ROOM_ALIAS = {"correct": "real", "spurious": "not_a_room"}
+_LINK_ALIAS = {"correct": "passable", "spurious": "not_passable"}
+
+
+def room_verdict(a: dict):
+    v = a.get("verdict")
+    return _ROOM_ALIAS.get(v, v)
+
+
+def link_verdict(a: dict):
+    v = a.get("verdict")
+    return _LINK_ALIAS.get(v, v)
 
 
 def compose(plan: dict, anno: dict) -> dict:
@@ -70,7 +89,7 @@ def compose(plan: dict, anno: dict) -> dict:
         for r in st["rooms"]:
             counts["rooms_total"] += 1
             a = rooms_v.get(r["id"]) or {}
-            v = a.get("verdict")
+            v = room_verdict(a)
             if v:
                 counts["rooms_judged"] += 1
                 if a.get("bulk"):
@@ -81,7 +100,7 @@ def compose(plan: dict, anno: dict) -> dict:
                 # between "not started" and "nearly done", and it is the one
                 # mistake that loses work silently.
                 counts["rooms_labelled_only"] += 1
-            if v == "spurious":
+            if v == "not_a_room":
                 continue
             if v in ("merge", "split"):
                 requests.append({"room": r["id"], "request": v,
@@ -118,7 +137,7 @@ def compose(plan: dict, anno: dict) -> dict:
         for e in st["edges"]:
             counts["links_total"] += 1
             a = edges_v.get(_key(e["a"], e["b"])) or {}
-            v = a.get("verdict")
+            v = link_verdict(a)
             if v:
                 counts["links_judged"] += 1
                 if a.get("bulk"):
@@ -127,7 +146,7 @@ def compose(plan: dict, anno: dict) -> dict:
                 held_out.append({"a": e["a"], "b": e["b"], "kind": "link",
                                  "storey": st["gid"]})
                 continue
-            if v != "correct":
+            if v != "passable":
                 continue
             # A link is only meaningful if both its rooms survived.
             if e["a"] not in keep_rooms or e["b"] not in keep_rooms:
@@ -147,20 +166,26 @@ def compose(plan: dict, anno: dict) -> dict:
                              "why": "endpoint room not confirmed"})
             continue
         counts["links_kept"] += 1
-        edges.append({"a": e["a"], "b": e["b"], "relation": "connected_by_door",
+        # An added link used to become a door unconditionally, which asserted a
+        # door leaf the annotator never claimed. They pick now; anything saved
+        # before that choice existed keeps the old reading.
+        rel = e.get("kind") or "connected_by_door"
+        if rel not in ("connected_by_door", "open_passage"):
+            rel = "connected_by_door"
+        edges.append({"a": e["a"], "b": e["b"], "relation": rel,
                       "storey": e.get("storey"), "provenance": "annotator"})
 
     # ---- the join between floors --------------------------------------
     for v in plan.get("vertical", []) or []:
         counts["vertical_total"] += 1
         a = vert_v.get(_key(v["a"], v["b"])) or {}
-        verdict = a.get("verdict")
+        verdict = link_verdict(a)
         if verdict:
             counts["vertical_judged"] += 1
         if verdict == "unsure":
             held_out.append({"a": v["a"], "b": v["b"], "kind": "vertical"})
             continue
-        if verdict != "correct":
+        if verdict != "passable":
             continue
         if v["a"] not in keep_rooms or v["b"] not in keep_rooms:
             held_out.append({"a": v["a"], "b": v["b"], "kind": "vertical",

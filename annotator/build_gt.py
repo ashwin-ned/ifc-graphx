@@ -33,7 +33,7 @@ from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from compose import compose, connectivity_gt
+from compose import compose, connectivity_gt, room_verdict, link_verdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
@@ -60,8 +60,17 @@ def _ingest_inbox(inbox: str) -> list:
                  if isinstance(doc, dict) and doc.get("format") == "bimsg-annotation-bundle"
                  else [doc])
         for a in items:
-            if not isinstance(a, dict) or not a.get("model") or not a.get("annotator"):
-                print(f"  ! {os.path.basename(p)}: entry without model/annotator, skipped")
+            if not isinstance(a, dict):
+                continue
+            # A composed building graph is not an annotation, and one sitting in
+            # the same folder used to be read as an empty one -- which then
+            # displaced the real file for that model.
+            if a.get("source") == "annotated" and "nodes" in a:
+                continue
+            if not a.get("model") or not a.get("annotator"):
+                print(f"  ! {os.path.basename(p)}: no model/annotator inside the "
+                      f"file, skipped (the filename is not trusted, since it is "
+                      f"the one thing that changes on the way back)")
                 continue
             out.append(a)
     return out
@@ -107,17 +116,21 @@ def load_pairs(inbox: str | None = None):
 
 
 def _judged(anno):
-    """Every judgement as key -> verdict, for agreement scoring."""
+    """Every judgement as key -> verdict, for agreement scoring.
+
+    Normalised through compose's aliases, so a file written before the verdict
+    words became specific is not counted as disagreeing with one written after.
+    """
     out = {}
     for rid, v in (anno.get("rooms") or {}).items():
         if v.get("verdict"):
-            out[("room", rid)] = v["verdict"]
+            out[("room", rid)] = room_verdict(v)
     for k, v in (anno.get("edges") or {}).items():
         if v.get("verdict"):
-            out[("link", k)] = v["verdict"]
+            out[("link", k)] = link_verdict(v)
     for k, v in (anno.get("vertical") or {}).items():
         if v.get("verdict"):
-            out[("vertical", k)] = v["verdict"]
+            out[("vertical", k)] = link_verdict(v)
     return out
 
 

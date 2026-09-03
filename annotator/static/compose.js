@@ -18,6 +18,14 @@
 
   function key(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
 
+  // The verdict words used to be "correct"/"spurious" for both rooms and
+  // links. They are specific now; these read the old ones so annotations
+  // recorded before the change compose to exactly the same graph.
+  const ROOM_ALIAS = { correct: "real", spurious: "not_a_room" };
+  const LINK_ALIAS = { correct: "passable", spurious: "not_passable" };
+  const roomVerdict = (a) => ROOM_ALIAS[a.verdict] || a.verdict;
+  const linkVerdict = (a) => LINK_ALIAS[a.verdict] || a.verdict;
+
   function compose(plan, anno) {
     const roomsV = anno.rooms || {};
     const edgesV = anno.edges || {};
@@ -48,12 +56,12 @@
       for (const r of st.rooms) {
         counts.rooms_total += 1;
         const a = roomsV[r.id] || {};
-        const v = a.verdict;
+        const v = roomVerdict(a);
         if (v) { counts.rooms_judged += 1; if (a.bulk) counts.rooms_bulk += 1; }
         // Looked at and relabelled, but never judged -- counted apart so
         // "not started" and "nearly done" are distinguishable.
         else if (a.label || a.note) counts.rooms_labelled_only += 1;
-        if (v === "spurious") continue;
+        if (v === "not_a_room") continue;
         if (v === "merge" || v === "split")
           requests.push({ room: r.id, request: v, storey: st.gid, note: a.note || "" });
         if (!v) continue;                 // unjudged rooms are not ground truth
@@ -85,13 +93,13 @@
       for (const e of st.edges) {
         counts.links_total += 1;
         const a = edgesV[key(e.a, e.b)] || {};
-        const v = a.verdict;
+        const v = linkVerdict(a);
         if (v) { counts.links_judged += 1; if (a.bulk) counts.links_bulk += 1; }
         if (v === "unsure") {
           heldOut.push({ a: e.a, b: e.b, kind: "link", storey: st.gid });
           continue;
         }
-        if (v !== "correct") continue;
+        if (v !== "passable") continue;
         if (!keep.has(e.a) || !keep.has(e.b)) {
           heldOut.push({ a: e.a, b: e.b, kind: "link", storey: st.gid,
                          why: "endpoint room not confirmed" });
@@ -112,7 +120,13 @@
         continue;
       }
       counts.links_kept += 1;
-      edges.push({ a: e.a, b: e.b, relation: "connected_by_door",
+      // An added link used to become a door unconditionally, asserting a door
+      // leaf the annotator never claimed. They pick now; older saves keep the
+      // old reading.
+      let rel = e.kind || "connected_by_door";
+      if (rel !== "connected_by_door" && rel !== "open_passage")
+        rel = "connected_by_door";
+      edges.push({ a: e.a, b: e.b, relation: rel,
                    storey: e.storey === undefined ? null : e.storey,
                    provenance: "annotator" });
     }
@@ -121,13 +135,13 @@
     for (const v of (plan.vertical || [])) {
       counts.vertical_total += 1;
       const a = vertV[key(v.a, v.b)] || {};
-      const verdict = a.verdict;
+      const verdict = linkVerdict(a);
       if (verdict) counts.vertical_judged += 1;
       if (verdict === "unsure") {
         heldOut.push({ a: v.a, b: v.b, kind: "vertical" });
         continue;
       }
-      if (verdict !== "correct") continue;
+      if (verdict !== "passable") continue;
       if (!keep.has(v.a) || !keep.has(v.b)) {
         heldOut.push({ a: v.a, b: v.b, kind: "vertical",
                        why: "endpoint room not confirmed" });

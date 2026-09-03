@@ -151,6 +151,9 @@ let verdicts = await page.evaluate(() =>
 ok("pressing 1 records a verdict", verdicts === 1, `got ${verdicts}`);
 ok("the room is outlined as judged",
    (await page.locator("#gRooms path.v-correct").count()) > 0);
+ok("the saved verdict says what it means, not \"correct\"",
+   (await page.evaluate(() => Object.values(window.BIMSGApp.state.anno.rooms)
+      .map((r) => r.verdict).filter(Boolean)[0])) === "real");
 
 await page.keyboard.press("Control+z");
 await page.waitForTimeout(150);
@@ -174,9 +177,20 @@ const nRooms = await polys.count();
 await polys.nth(nRooms - 1).click();
 await page.waitForTimeout(120);
 await polys.nth(nRooms - 2).click();
-await page.waitForTimeout(150);
+await page.waitForTimeout(250);
+
+/* Adding a link asks whether it is a door or an open passage. A door can be
+   shut and an archway cannot, which is the difference that matters to anything
+   planning a route, so the tool refuses to guess. */
+ok("adding a link asks door or open passage",
+   (await page.locator("#mask.on").count()) > 0);
+await page.click("#dlgPick1");                 // the open-passage option
+await page.waitForTimeout(200);
 let added = await page.evaluate(() => window.BIMSGApp.state.anno.added_edges.length);
 ok("A links two rooms", added === 1, `got ${added}`);
+ok("the chosen kind is recorded",
+   (await page.evaluate(() =>
+     (window.BIMSGApp.state.anno.added_edges[0] || {}).kind)) === "open_passage");
 
 await page.keyboard.press("Escape");
 await page.check("#lyEdges");            // the added link needs to be visible
@@ -223,10 +237,10 @@ await page.keyboard.press("2");                       // one deliberate spurious
 await page.waitForTimeout(150);
 const marked = await page.evaluate(() => {
   const e = Object.entries(window.BIMSGApp.state.anno.rooms)
-    .find(([, v]) => v.verdict === "spurious");
+    .find(([, v]) => v.verdict === "not_a_room");
   return e ? e[0] : null;
 });
-ok("a room can be marked spurious before sweeping", !!marked);
+ok("a room can be marked \"not a room\" before sweeping", !!marked);
 
 await page.click("#btnSweep");
 await page.waitForTimeout(200);
@@ -252,11 +266,20 @@ ok("every room on the floor is now judged", swept.roomsUnjudged === 0,
    String(swept.roomsUnjudged));
 ok("every link on the floor is now judged", swept.linksUnjudged === 0,
    String(swept.linksUnjudged));
-ok("the deliberate 'spurious' survived the sweep",
-   swept.keptSpurious === "spurious", String(swept.keptSpurious));
+ok("the deliberate 'not a room' survived the sweep",
+   swept.keptSpurious === "not_a_room", String(swept.keptSpurious));
 ok("and was not relabelled as bulk", swept.spuriousIsBulk === false);
 ok(`swept verdicts are flagged bulk (${swept.bulkRooms} rooms, ${swept.bulkLinks} links)`,
    swept.bulkRooms > 0 && swept.bulkLinks > 0);
+const sweptWords = await page.evaluate(() => ({
+  room: [...new Set(Object.values(window.BIMSGApp.state.anno.rooms)
+    .filter((r) => r.bulk).map((r) => r.verdict))],
+  link: [...new Set(Object.values(window.BIMSGApp.state.anno.edges)
+    .filter((r) => r.bulk).map((r) => r.verdict))],
+}));
+ok("the sweep writes the specific words too",
+   sweptWords.room.join() === "real" && sweptWords.link.join() === "passable",
+   JSON.stringify(sweptWords));
 ok("the storey now shows as done",
    (await page.locator("#storeyList button .tick").count()) > 0);
 await page.check("#lyEdges");
