@@ -265,9 +265,17 @@ def stats(g: dict) -> dict:
         comps.append(comp)
     comps.sort(key=len, reverse=True)
     from collections import Counter
+    # Naming the cut-off rooms is the whole use of the count: "4 pieces" is a
+    # number to worry about, "the three stairs and two WCs are sealed" is
+    # something to go and fix.
+    stray = [sorted((n["id"] for n in spaces if n["id"] in set(c)),
+                    key=lambda i: i)
+             for c in comps[1:]]
+    label = {n["id"]: (n.get("label") or n["id"]) for n in spaces}
     return {
         "rooms": len(spaces),
         "components": len(comps),
+        "cut_off": [[label[i] for i in c] for c in stray],
         "largest": len(comps[0]) if comps else 0,
         "isolated": sum(1 for c in comps if len(c) == 1),
         "relations": dict(Counter(e["relation"] for e in g["edges"])),
@@ -356,6 +364,8 @@ svg.pan{cursor:grabbing}
 .hud{position:absolute;left:12px;bottom:12px;color:var(--muted);font-size:11.5px;
   background:rgba(255,255,255,.9);border:1px solid var(--line);padding:5px 9px;
   border-radius:7px;pointer-events:none}
+.warn ul{margin:6px 0 0;padding-left:18px}
+.warn li{margin:2px 0}
 .warn{background:#fef3c7;border:1px solid #fcd34d;border-radius:7px;padding:8px 10px;
   font-size:11.5px;line-height:1.5;margin-top:10px}
 </style></head><body>
@@ -383,6 +393,10 @@ svg.pan{cursor:grabbing}
 </main>
 <script>
 const D = __DATA__;
+
+/* Room names come from an IFC file; nothing
+ * derived from one reaches innerHTML unescaped. */
+const esc=(s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const NS="http://www.w3.org/2000/svg";
 const PROV={ifc:"#2563eb",inferred:"#7c3aed",projected:"#f59e0b",recovered:"#f59e0b"};
 const REL={connected_by_door:"#059669",open_passage:"#d97706",vertically_connected:"#7c3aed"};
@@ -399,10 +413,16 @@ $("stats").innerHTML =
   row("largest piece", s.largest) + row("isolated rooms", s.isolated) +
   Object.entries(s.relations).map(([k,v])=>row(k.replace(/_/g," "), v)).join("");
 function row(k,v){return `<div class="row"><span>${k}</span><b>${v}</b></div>`;}
-if (s.components > 1)
+if (s.components > 1) {
+  const pieces=(s.cut_off||[]).map(
+    c=>`<li>${c.map(esc).join(", ")}</li>`).join("");
   $("warn").innerHTML = `<div class="warn"><b>${s.components} disconnected pieces.</b>
-    A building should be one. Usually a floor-to-floor link is missing or an
-    endpoint room was never judged.</div>`;
+    A building should be one. Cut off from the main ${s.largest} rooms:
+    <ul>${pieces}</ul>
+    Either no link into these was ever proposed -- accepting a floor in bulk
+    agrees with the links shown, it cannot add one that is missing -- or the
+    link into them was judged not passable.</div>`;
+}
 
 /* Storey plates, sized to the rooms that sit on them. */
 const plates={};
@@ -484,7 +504,6 @@ function draw(){
     }
   }
 }
-const esc=(s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 ["cLabels","cVert","cBulk"].forEach(i=>$(i).onchange=draw);
 draw();
 

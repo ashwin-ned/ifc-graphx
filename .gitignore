@@ -27,3 +27,8 @@ venv/
 # Only ever present when CI installs playwright for the browser test.
 node_modules/
 package-lock.json
+
+# Derived from annotations/ by build_gt.py and export_graph.py. Both are one
+# command away and would otherwise churn on every annotation that lands.
+annotated_gt/
+graphs/
