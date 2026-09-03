@@ -207,10 +207,19 @@ def main():
         g = compose(plan, anno)
         if not g["complete"] and not args.include_incomplete:
             c = g["counts"]
-            print(f"  {model}__{who}: incomplete "
-                  f"(rooms {c['rooms_judged']}/{c['rooms_total']}, "
-                  f"links {c['links_judged']}/{c['links_total']}, "
-                  f"floor {c['vertical_judged']}/{c['vertical_total']}) — skipped")
+            missing = []
+            if c["rooms_judged"] < c["rooms_total"]:
+                missing.append(f"rooms {c['rooms_judged']}/{c['rooms_total']}")
+            if c["links_judged"] < c["links_total"]:
+                missing.append(f"links {c['links_judged']}/{c['links_total']}")
+            if c["vertical_judged"] < c["vertical_total"]:
+                missing.append(
+                    f"floor links {c['vertical_judged']}/{c['vertical_total']}")
+            print(f"  {model}__{who}: incomplete ({', '.join(missing)}) — skipped")
+            if c.get("rooms_labelled_only"):
+                print(f"      {c['rooms_labelled_only']} room(s) were relabelled "
+                      f"but never given a verdict, so they are dropped; ask for "
+                      f"1-5 on those")
             skipped += 1
             continue
         json.dump(g, open(os.path.join(args.out, f"{model}__{who}.graph.json"), "w"),

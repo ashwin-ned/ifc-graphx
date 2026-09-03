@@ -43,6 +43,7 @@ def compose(plan: dict, anno: dict) -> dict:
 
     nodes, edges, held_out, requests = [], [], [], []
     counts = {"rooms_total": 0, "rooms_judged": 0, "rooms_kept": 0,
+              "rooms_labelled_only": 0,
               "links_total": 0, "links_judged": 0, "links_kept": 0,
               "vertical_total": 0, "vertical_judged": 0, "vertical_kept": 0}
 
@@ -65,6 +66,12 @@ def compose(plan: dict, anno: dict) -> dict:
             v = a.get("verdict")
             if v:
                 counts["rooms_judged"] += 1
+            elif a.get("label") or a.get("note"):
+                # Someone looked at this room and corrected it, but never gave a
+                # verdict. Worth counting separately: it is the difference
+                # between "not started" and "nearly done", and it is the one
+                # mistake that loses work silently.
+                counts["rooms_labelled_only"] += 1
             if v == "spurious":
                 continue
             if v in ("merge", "split"):

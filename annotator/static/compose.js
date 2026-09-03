@@ -29,6 +29,7 @@
     const nodes = [], edges = [], heldOut = [], requests = [];
     const counts = {
       rooms_total: 0, rooms_judged: 0, rooms_kept: 0,
+      rooms_labelled_only: 0,
       links_total: 0, links_judged: 0, links_kept: 0,
       vertical_total: 0, vertical_judged: 0, vertical_kept: 0,
     };
@@ -49,6 +50,9 @@
         const a = roomsV[r.id] || {};
         const v = a.verdict;
         if (v) counts.rooms_judged += 1;
+        // Looked at and relabelled, but never judged -- counted apart so
+        // "not started" and "nearly done" are distinguishable.
+        else if (a.label || a.note) counts.rooms_labelled_only += 1;
         if (v === "spurious") continue;
         if (v === "merge" || v === "split")
           requests.push({ room: r.id, request: v, storey: st.gid, note: a.note || "" });
