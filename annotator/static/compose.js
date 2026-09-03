@@ -66,7 +66,10 @@
           predicted_label: r.predicted_label === undefined ? null : r.predicted_label,
           area: r.area, centroid: r.centroid,
           parent: st.gid,
-          provenance: r.source === "ifc" ? "ifc" : "inferred",
+          // "ifc" stated, "inferred" recovered by the pipeline,
+          // "projected"/"recovered" resolved from an annotator's pin.
+          provenance: ["ifc", "inferred", "projected", "recovered"]
+            .includes(r.source) ? r.source : "inferred",
           verdict: v,
         };
         // Judged on its own, or swept in with the rest of a floor.

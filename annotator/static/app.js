@@ -373,7 +373,8 @@ function render() {
       const pending = S.edgeFrom?.id === r.id || S.vertFrom?.id === r.id;
       e.setAttribute("class", [
         "room",
-        r.source === "inferred" ? "inferred" : "ifc",
+        ["ifc", "inferred", "projected", "recovered"].includes(r.source)
+          ? r.source : "inferred",
         v ? "v-" + v : "",
         S.sel?.kind === "room" && S.sel.id === r.id ? "sel" : "",
         pending ? "pending" : "",
@@ -408,7 +409,8 @@ function render() {
     for (const ed of st.edges) {
       const k = edgeKey(ed.a, ed.b);
       const v = S.anno.edges[k]?.verdict;
-      draw(ed.a, ed.b, ["edge", ed.type, v ? "v-" + v : "",
+      draw(ed.a, ed.b, ["edge", ed.type, ed.proposed ? "proposed" : "",
+                        v ? "v-" + v : "",
                         S.sel?.kind === "edge" && S.sel.id === k ? "sel" : ""]
                        .filter(Boolean).join(" "),
            () => { S.sel = { kind: "edge", id: k, a: ed.a, b: ed.b }; render(); });
@@ -721,9 +723,23 @@ function renderInspector() {
     box.innerHTML = `
       <div class="ins-tier" style="background:${tierCol}">space</div>
       <div class="ins-title">${esc(a.label || r.label)}</div>
-      <div class="ins-sub">${r.source === "inferred"
-        ? "recovered geometrically — the IFC never stated this room"
-        : "stated by the IFC"}</div>
+      <div class="ins-sub">${{
+        ifc: "stated by the IFC",
+        inferred: "recovered geometrically — the IFC never stated this room",
+        projected: "projected from the same shaft on another floor, because " +
+                   "someone pinned it as missing",
+        recovered: "recovered from the walls around a pin someone dropped",
+      }[r.source] || "recovered geometrically"}</div>
+      ${r.evidence ? `<div class="note">
+        ${r.evidence.strategy === "project"
+          ? `Its outline is the ${esc(r.evidence.from_room_label || "room")} on
+             ${esc(r.evidence.from_storey_name || "another floor")}
+             ${r.evidence.via_projection
+               ? "&mdash; which was itself projected, so this is second-hand"
+               : "&mdash; straight from the file"}.`
+          : "Its outline was flood-filled from the walls around the pin."}
+        Judge it like any other room: if the shaft does not continue here,
+        mark it <b>Not a room</b>.</div>` : ""}
       ${hasPred ? `<div class="ins-row"><span>model guess</span>
         <span title="${esc(r.label_source || "")}">${esc(r.predicted_label)}</span></div>` : ""}
       <div class="ins-row"><span>area</span><span>${r.area} m²</span></div>

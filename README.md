@@ -58,6 +58,33 @@ In **dataset folder** mode the tool writes `bimsg-annotations.json` into that
 folder after every save, so the file to send back is already there and
 reopening the folder restores everything.
 
+## Turning a missing-room pin into a node
+
+A pin is a point, a label and a storey. That records a real recall failure, but
+it cannot enter the graph: a node needs an extent, and inventing edges from a
+click position would be guessing.
+
+```bash
+python annotator/resolve_pins.py --inbox ~/returned --out annotator/data-resolved
+```
+
+Two strategies. **project** carries a vertical shaft up from the nearest storey
+that models it — a stair on the ground floor pinned on the floor above is the
+same shaft, so the polygon comes from the file and the position was confirmed by
+a person. It is gated on the room being a shaft, because only a shaft repeats
+its footprint from floor to floor; without that gate it happily "projected" a
+67 m² office and a 133 m² hallway out of unrelated neighbours. **enclose**
+flood-fills free space around the pin, bounded by that storey's walls, for
+rooms recovery rejected as too small or merged into a corridor.
+
+Anything neither resolves stays a pin — still a recorded recall miss, still not
+a node. Refusing is the point.
+
+Nothing is asserted: resolved rooms carry `source: "projected"`/`"recovered"`
+plus the evidence they came from, draw in amber, and their links are marked
+`proposed`. Hand the output folder back for a second pass and judge them like
+anything else.
+
 ## Collecting the results
 
 ```bash

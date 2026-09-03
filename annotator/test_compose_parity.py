@@ -142,6 +142,19 @@ def main():
             fh.write(DRIVER)
         for p in plans:
             plan = json.load(open(p))
+            # Rooms resolved from a pin carry source "projected"/"recovered",
+            # and both composers must map that onto provenance the same way.
+            # No exported plan has one yet, so stage them here.
+            for i, st in enumerate(plan["storeys"]):
+                for j, r in enumerate(st["rooms"]):
+                    if (i + j) % 7 == 3:
+                        r["source"] = "projected" if j % 2 else "recovered"
+            # node reads the plan from disk, so the staged copy has to be
+            # written out -- handing it the original path compares two
+            # different inputs and fails for a reason that is not a drift.
+            pp = os.path.join(td, "plan.json")
+            with open(pp, "w") as fh:
+                json.dump(plan, fh)
             for trial in range(3):
                 anno = random_anno(plan, rng)
                 ap = os.path.join(td, "anno.json")
@@ -150,7 +163,7 @@ def main():
 
                 g_py = compose(plan, anno)
                 out_py = {"graph": g_py, "gt": connectivity_gt(g_py)}
-                r = subprocess.run([NODE, drv, js, p, ap],
+                r = subprocess.run([NODE, drv, js, pp, ap],
                                    capture_output=True, text=True)
                 if r.returncode != 0:
                     print(f"FAIL {os.path.basename(p)} trial {trial}: node error\n{r.stderr}")

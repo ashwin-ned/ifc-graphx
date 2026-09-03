@@ -378,3 +378,10 @@ svg.picking{cursor:crosshair}
 .vlegend div{display:flex;gap:6px;align-items:baseline}
 .vlegend kbd{margin:0;flex:none}
 .vlegend b{color:var(--ink);font-weight:600;white-space:nowrap}
+
+/* Rooms resolved from an annotator's pin, and the links they imply. Amber
+   says "this is a proposal derived from your pin, not something the pipeline
+   found" -- it has to be judged before it is worth anything. */
+.room.projected{fill:var(--v-unsure);stroke:var(--v-unsure);stroke-dasharray:.5 .22}
+.room.recovered{fill:var(--v-unsure);stroke:var(--v-unsure);stroke-dasharray:.22 .22}
+.edge.proposed{stroke:var(--v-unsure);stroke-dasharray:.5 .25}

@@ -97,7 +97,12 @@ def compose(plan: dict, anno: dict) -> dict:
                 "predicted_label": r.get("predicted_label"),
                 "area": r["area"], "centroid": r["centroid"],
                 "parent": st["gid"],
-                "provenance": "ifc" if r["source"] == "ifc" else "inferred",
+                # "ifc" stated, "inferred" recovered by the pipeline,
+                # "projected"/"recovered" resolved from an annotator's pin.
+                # Collapsing these loses which evidence the node rests on.
+                "provenance": (r["source"] if r["source"] in
+                               ("ifc", "inferred", "projected", "recovered")
+                               else "inferred"),
                 "verdict": v,
                 # Whether this was judged on its own or swept in with the rest
                 # of a floor. A swept verdict is weaker evidence and anything
