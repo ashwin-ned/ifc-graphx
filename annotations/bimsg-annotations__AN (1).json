@@ -1,8 +1,8 @@
 {
  "format": "bimsg-annotation-bundle",
  "version": 1,
- "annotator": null,
- "exported": "2026-09-03T12:38:48Z",
+ "annotator": "AN",
+ "exported": "2026-09-03T15:30:28Z",
  "annotations": [
   {
    "rooms": {
@@ -1053,6 +1053,731 @@
    "model": "model_3",
    "annotator": "AN",
    "updated": "2026-09-03T12:38:48Z"
+  },
+  {
+   "rooms": {
+    "3FEGQ1pj12XPo30STbPWKP": {
+     "verdict": "real"
+    },
+    "3FEGQ1pj12XPo30STbPWKG": {
+     "verdict": "real"
+    },
+    "INF-13LV5dTeP3CAox54x56C1Z-0005-r00": {
+     "verdict": "not_a_room"
+    },
+    "3FEGQ1pj12XPo30STbPWKQ": {
+     "verdict": "real",
+     "label": "hallway"
+    },
+    "3FEGQ1pj12XPo30STbPWKV": {
+     "label": "room",
+     "verdict": "real",
+     "bulk": true
+    },
+    "3FEGQ1pj12XPo30STbPWKL": {
+     "label": "hallway",
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-13LV5dTeP3CAox54x56C1Z-0011-r00": {
+     "label": "Bathrooms",
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-13LV5dTeP3CAox54x56C1Z-0007-r00": {
+     "label": "Bathrooms",
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-13LV5dTeP3CAox54x56C1Z-0008-r00": {
+     "label": "Hallway",
+     "verdict": "real",
+     "bulk": true
+    },
+    "3FEGQ1pj12XPo30STbPWKM": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0011": {
+     "label": "bathroom",
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0008": {
+     "label": "hallway",
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0007": {
+     "label": "bathroom",
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0014": {
+     "label": "lobby",
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0002": {
+     "label": "lobby",
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0003": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0004": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0005": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0013": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0015": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0016": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "EXT-1owBOg$5v0GwDBa7HPOsiG-r00": {
+     "verdict": "not_a_room"
+    },
+    "3FEGQ1pj12XPo30STbPWPv": {
+     "verdict": "real"
+    },
+    "3FEGQ1pj12XPo30STbPWPb": {
+     "verdict": "real"
+    },
+    "EXT-1fCNYHS2f5GRPTJYMA6G5$-r00": {
+     "verdict": "not_a_room"
+    },
+    "3FEGQ1pj12XPo30STbPWP$": {
+     "verdict": "real"
+    },
+    "3FEGQ1pj12XPo30STbPWPp": {
+     "verdict": "real"
+    },
+    "EXT-1fCNYHS2f5GRPTJYMA6GVy-r00": {
+     "label": "terrace",
+     "verdict": "real"
+    },
+    "3FEGQ1pj12XPo30STbPWP9": {
+     "verdict": "not_a_room"
+    }
+   },
+   "edges": {
+    "3FEGQ1pj12XPo30STbPWKV|INF-13LV5dTeP3CAox54x56C1Z-0008-r00": {
+     "verdict": "passable",
+     "a": "3FEGQ1pj12XPo30STbPWKV",
+     "b": "INF-13LV5dTeP3CAox54x56C1Z-0008-r00",
+     "bulk": true
+    },
+    "3FEGQ1pj12XPo30STbPWKV|INF-13LV5dTeP3CAox54x56C1Z-0011-r00": {
+     "verdict": "passable",
+     "a": "3FEGQ1pj12XPo30STbPWKV",
+     "b": "INF-13LV5dTeP3CAox54x56C1Z-0011-r00",
+     "bulk": true
+    },
+    "3FEGQ1pj12XPo30STbPWKG|3FEGQ1pj12XPo30STbPWKP": {
+     "verdict": "passable",
+     "a": "3FEGQ1pj12XPo30STbPWKG",
+     "b": "3FEGQ1pj12XPo30STbPWKP",
+     "bulk": true
+    },
+    "3FEGQ1pj12XPo30STbPWKM|INF-13LV5dTeP3CAox54x56C1Z-0007-r00": {
+     "verdict": "passable",
+     "a": "3FEGQ1pj12XPo30STbPWKM",
+     "b": "INF-13LV5dTeP3CAox54x56C1Z-0007-r00",
+     "bulk": true
+    },
+    "3FEGQ1pj12XPo30STbPWKM|INF-13LV5dTeP3CAox54x56C1Z-0008-r00": {
+     "verdict": "passable",
+     "a": "3FEGQ1pj12XPo30STbPWKM",
+     "b": "INF-13LV5dTeP3CAox54x56C1Z-0008-r00",
+     "bulk": true
+    },
+    "INF-13LV5dTeP3CAox54x56C1Z-0007-r00|INF-13LV5dTeP3CAox54x56C1Z-0008-r00": {
+     "verdict": "passable",
+     "a": "INF-13LV5dTeP3CAox54x56C1Z-0007-r00",
+     "b": "INF-13LV5dTeP3CAox54x56C1Z-0008-r00",
+     "bulk": true
+    },
+    "INF-13LV5dTeP3CAox54x56C1Z-0008-r00|INF-13LV5dTeP3CAox54x56C1Z-0011-r00": {
+     "verdict": "passable",
+     "a": "INF-13LV5dTeP3CAox54x56C1Z-0008-r00",
+     "b": "INF-13LV5dTeP3CAox54x56C1Z-0011-r00",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0004|INF-1jPCssxb5C1RSM_YHIx$zl-0008": {
+     "verdict": "passable",
+     "a": "INF-1jPCssxb5C1RSM_YHIx$zl-0004",
+     "b": "INF-1jPCssxb5C1RSM_YHIx$zl-0008",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0007|INF-1jPCssxb5C1RSM_YHIx$zl-0008": {
+     "verdict": "passable",
+     "a": "INF-1jPCssxb5C1RSM_YHIx$zl-0007",
+     "b": "INF-1jPCssxb5C1RSM_YHIx$zl-0008",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0008|INF-1jPCssxb5C1RSM_YHIx$zl-0011": {
+     "verdict": "passable",
+     "a": "INF-1jPCssxb5C1RSM_YHIx$zl-0008",
+     "b": "INF-1jPCssxb5C1RSM_YHIx$zl-0011",
+     "bulk": true
+    },
+    "INF-1jPCssxb5C1RSM_YHIx$zl-0011|INF-1jPCssxb5C1RSM_YHIx$zl-0013": {
+     "verdict": "passable",
+     "a": "INF-1jPCssxb5C1RSM_YHIx$zl-0011",
+     "b": "INF-1jPCssxb5C1RSM_YHIx$zl-0013",
+     "bulk": true
+    }
+   },
+   "vertical": {},
+   "added_edges": [
+    {
+     "id": "xhfnu5gav",
+     "a": "3FEGQ1pj12XPo30STbPWKP",
+     "b": "3FEGQ1pj12XPo30STbPWKQ",
+     "storey": "13LV5dTeP3CAox54x56C1Z",
+     "type": "manual",
+     "kind": "open_passage"
+    },
+    {
+     "id": "xeldxqt30",
+     "a": "3FEGQ1pj12XPo30STbPWKQ",
+     "b": "3FEGQ1pj12XPo30STbPWKV",
+     "storey": "13LV5dTeP3CAox54x56C1Z",
+     "type": "manual",
+     "kind": "open_passage"
+    },
+    {
+     "id": "xc3bx0g94",
+     "a": "3FEGQ1pj12XPo30STbPWKG",
+     "b": "3FEGQ1pj12XPo30STbPWKL",
+     "storey": "13LV5dTeP3CAox54x56C1Z",
+     "type": "manual",
+     "kind": "open_passage"
+    },
+    {
+     "id": "xtnlay6zv",
+     "a": "3FEGQ1pj12XPo30STbPWKL",
+     "b": "3FEGQ1pj12XPo30STbPWKM",
+     "storey": "13LV5dTeP3CAox54x56C1Z",
+     "type": "manual",
+     "kind": "open_passage"
+    },
+    {
+     "id": "x49tnasfe",
+     "a": "INF-1jPCssxb5C1RSM_YHIx$zl-0003",
+     "b": "INF-1jPCssxb5C1RSM_YHIx$zl-0004",
+     "storey": "1jPCssxb5C1RSM_YHIx$zl",
+     "type": "manual",
+     "kind": "open_passage"
+    },
+    {
+     "id": "x97anzjf1",
+     "a": "INF-1jPCssxb5C1RSM_YHIx$zl-0003",
+     "b": "INF-1jPCssxb5C1RSM_YHIx$zl-0002",
+     "storey": "1jPCssxb5C1RSM_YHIx$zl",
+     "type": "manual",
+     "kind": "open_passage"
+    },
+    {
+     "id": "xe8nq2zi1",
+     "a": "INF-1jPCssxb5C1RSM_YHIx$zl-0016",
+     "b": "INF-1jPCssxb5C1RSM_YHIx$zl-0014",
+     "storey": "1jPCssxb5C1RSM_YHIx$zl",
+     "type": "manual",
+     "kind": "open_passage"
+    },
+    {
+     "id": "xqvo31zyv",
+     "a": "INF-1jPCssxb5C1RSM_YHIx$zl-0016",
+     "b": "INF-1jPCssxb5C1RSM_YHIx$zl-0015",
+     "storey": "1jPCssxb5C1RSM_YHIx$zl",
+     "type": "manual",
+     "kind": "open_passage"
+    }
+   ],
+   "added_vertical": [],
+   "missing_rooms": [
+    {
+     "id": "xt2gi4ghc",
+     "storey": "1jPCssxb5C1RSM_YHIx$zl",
+     "x": 40.95,
+     "y": 24.03,
+     "label": "bathroom"
+    },
+    {
+     "id": "x4f5vbl9h",
+     "storey": "1jPCssxb5C1RSM_YHIx$zl",
+     "x": 40.98,
+     "y": 19.73,
+     "label": "bathroom"
+    },
+    {
+     "id": "x4aegm3fu",
+     "storey": "1jPCssxb5C1RSM_YHIx$zl",
+     "x": 40.7,
+     "y": 18.61,
+     "label": "bathroom"
+    },
+    {
+     "id": "xnhfwecc1",
+     "storey": "1jPCssxb5C1RSM_YHIx$zl",
+     "x": 40.64,
+     "y": 17.06,
+     "label": "bathroom"
+    }
+   ],
+   "model": "model_20",
+   "annotator": "AN",
+   "updated": "2026-09-03T15:25:43Z"
+  },
+  {
+   "rooms": {
+    "EXT-13LV5dTeP3CAox54x56C1Z-r00": {
+     "verdict": "not_a_room"
+    },
+    "1hBH8bG2D4Veii_rw1AlQ1": {
+     "verdict": "real"
+    },
+    "3gIQdAPYT20Og4_q8ebzPh": {
+     "verdict": "real"
+    },
+    "3gIQdAPYT20Og4_q8ebzPZ": {
+     "verdict": "real"
+    },
+    "2Qere5o7D78RmGllIFgrO_": {
+     "verdict": "real"
+    },
+    "0AfG6dBOT22u7UTlFFE6EJ": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P4Fy": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P4F$": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P4D7": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P4Dw": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P5nj": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "2QTLaWvQ16oQs1fDVZ7rAI": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "EXT-0kWfSd9l1F5hqE2TIsDduT-r00": {
+     "verdict": "not_a_room"
+    },
+    "0h5UEozyvE$9ZOXqT3COt6": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACm0": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACmI": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACmL": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACmh": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-0kWfSd9l1F5hqE2TIsDduT-0004-r00": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "INF-0kWfSd9l1F5hqE2TIsDduT-0006-r00": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "EXT-2Kj_PyC3fEihrWhiF1eZ9J-r00": {
+     "verdict": "not_a_room"
+    },
+    "3gIQdAPYT20Og4_q8ebzdJ": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpu": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpx": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACp_": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpn": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpq": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpt": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACoA": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "EXT-2Kj_PyC3fEihrWhiF1eZEU-r00": {
+     "verdict": "not_a_room"
+    },
+    "1fnPS9c4D3_eCeARL_E$wT": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$wO": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$wR": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vc": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vX": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vi": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vl": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vg": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vr": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vm": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vp": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$uo": {
+     "verdict": "real",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$uz": {
+     "verdict": "real",
+     "bulk": true
+    }
+   },
+   "edges": {
+    "0AfG6dBOT22u7UTlFFE6EJ|3gIQdAPYT20Og4_q8ebzPZ": {
+     "verdict": "passable",
+     "a": "0AfG6dBOT22u7UTlFFE6EJ",
+     "b": "3gIQdAPYT20Og4_q8ebzPZ",
+     "bulk": true
+    },
+    "0AfG6dBOT22u7UTlFFE6EJ|2QTLaWvQ16oQs1fDVZ7rAI": {
+     "verdict": "passable",
+     "a": "0AfG6dBOT22u7UTlFFE6EJ",
+     "b": "2QTLaWvQ16oQs1fDVZ7rAI",
+     "bulk": true
+    },
+    "0AfG6dBOT22u7UTlFFE6EJ|0Vgr1wBTbBF9IQ7uE2P4Fy": {
+     "verdict": "passable",
+     "a": "0AfG6dBOT22u7UTlFFE6EJ",
+     "b": "0Vgr1wBTbBF9IQ7uE2P4Fy",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P4F$|0Vgr1wBTbBF9IQ7uE2P4Fy": {
+     "verdict": "passable",
+     "a": "0Vgr1wBTbBF9IQ7uE2P4F$",
+     "b": "0Vgr1wBTbBF9IQ7uE2P4Fy",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P4D7|3gIQdAPYT20Og4_q8ebzPZ": {
+     "verdict": "passable",
+     "a": "0Vgr1wBTbBF9IQ7uE2P4D7",
+     "b": "3gIQdAPYT20Og4_q8ebzPZ",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P4Dw|3gIQdAPYT20Og4_q8ebzPZ": {
+     "verdict": "passable",
+     "a": "0Vgr1wBTbBF9IQ7uE2P4Dw",
+     "b": "3gIQdAPYT20Og4_q8ebzPZ",
+     "bulk": true
+    },
+    "0Vgr1wBTbBF9IQ7uE2P5nj|3gIQdAPYT20Og4_q8ebzPZ": {
+     "verdict": "passable",
+     "a": "0Vgr1wBTbBF9IQ7uE2P5nj",
+     "b": "3gIQdAPYT20Og4_q8ebzPZ",
+     "bulk": true
+    },
+    "3gIQdAPYT20Og4_q8ebzPZ|3gIQdAPYT20Og4_q8ebzPh": {
+     "verdict": "passable",
+     "a": "3gIQdAPYT20Og4_q8ebzPZ",
+     "b": "3gIQdAPYT20Og4_q8ebzPh",
+     "bulk": true
+    },
+    "2Qere5o7D78RmGllIFgrO_|3gIQdAPYT20Og4_q8ebzPZ": {
+     "verdict": "passable",
+     "a": "2Qere5o7D78RmGllIFgrO_",
+     "b": "3gIQdAPYT20Og4_q8ebzPZ",
+     "bulk": true
+    },
+    "1hBH8bG2D4Veii_rw1AlQ1|3gIQdAPYT20Og4_q8ebzPh": {
+     "verdict": "passable",
+     "a": "1hBH8bG2D4Veii_rw1AlQ1",
+     "b": "3gIQdAPYT20Og4_q8ebzPh",
+     "bulk": true
+    },
+    "1hBH8bG2D4Veii_rw1AlQ1|EXT-13LV5dTeP3CAox54x56C1Z-r00": {
+     "verdict": "passable",
+     "a": "1hBH8bG2D4Veii_rw1AlQ1",
+     "b": "EXT-13LV5dTeP3CAox54x56C1Z-r00",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACm0|INF-0kWfSd9l1F5hqE2TIsDduT-0006-r00": {
+     "verdict": "not_passable",
+     "a": "3g7aOqnZPFsOHoQlQFACm0",
+     "b": "INF-0kWfSd9l1F5hqE2TIsDduT-0006-r00"
+    },
+    "3g7aOqnZPFsOHoQlQFACm0|3g7aOqnZPFsOHoQlQFACmI": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACm0",
+     "b": "3g7aOqnZPFsOHoQlQFACmI",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACmL|3g7aOqnZPFsOHoQlQFACmh": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACmL",
+     "b": "3g7aOqnZPFsOHoQlQFACmh",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACmL|INF-0kWfSd9l1F5hqE2TIsDduT-0004-r00": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACmL",
+     "b": "INF-0kWfSd9l1F5hqE2TIsDduT-0004-r00",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACp_|3g7aOqnZPFsOHoQlQFACpt": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACp_",
+     "b": "3g7aOqnZPFsOHoQlQFACpt",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpn|3g7aOqnZPFsOHoQlQFACpt": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACpn",
+     "b": "3g7aOqnZPFsOHoQlQFACpt",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpq|3g7aOqnZPFsOHoQlQFACpt": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACpq",
+     "b": "3g7aOqnZPFsOHoQlQFACpt",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpt|3gIQdAPYT20Og4_q8ebzdJ": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACpt",
+     "b": "3gIQdAPYT20Og4_q8ebzdJ",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpt|3g7aOqnZPFsOHoQlQFACpu": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACpt",
+     "b": "3g7aOqnZPFsOHoQlQFACpu",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACpt|3g7aOqnZPFsOHoQlQFACpx": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACpt",
+     "b": "3g7aOqnZPFsOHoQlQFACpx",
+     "bulk": true
+    },
+    "3g7aOqnZPFsOHoQlQFACoA|3g7aOqnZPFsOHoQlQFACpu": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACoA",
+     "b": "3g7aOqnZPFsOHoQlQFACpu",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$wO|1fnPS9c4D3_eCeARL_E$wT": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$wO",
+     "b": "1fnPS9c4D3_eCeARL_E$wT",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$wO|1fnPS9c4D3_eCeARL_E$wR": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$wO",
+     "b": "1fnPS9c4D3_eCeARL_E$wR",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vc|1fnPS9c4D3_eCeARL_E$wR": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vc",
+     "b": "1fnPS9c4D3_eCeARL_E$wR",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vX|1fnPS9c4D3_eCeARL_E$vc": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vX",
+     "b": "1fnPS9c4D3_eCeARL_E$vc",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vi|1fnPS9c4D3_eCeARL_E$wT": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vi",
+     "b": "1fnPS9c4D3_eCeARL_E$wT",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vl|1fnPS9c4D3_eCeARL_E$wR": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vl",
+     "b": "1fnPS9c4D3_eCeARL_E$wR",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vl|1fnPS9c4D3_eCeARL_E$vm": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vl",
+     "b": "1fnPS9c4D3_eCeARL_E$vm",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vl|1fnPS9c4D3_eCeARL_E$vr": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vl",
+     "b": "1fnPS9c4D3_eCeARL_E$vr",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vg|1fnPS9c4D3_eCeARL_E$vl": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vg",
+     "b": "1fnPS9c4D3_eCeARL_E$vl",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$vm|1fnPS9c4D3_eCeARL_E$vp": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vm",
+     "b": "1fnPS9c4D3_eCeARL_E$vp",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$uo|1fnPS9c4D3_eCeARL_E$vl": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$uo",
+     "b": "1fnPS9c4D3_eCeARL_E$vl",
+     "bulk": true
+    },
+    "1fnPS9c4D3_eCeARL_E$uz|1fnPS9c4D3_eCeARL_E$vl": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$uz",
+     "b": "1fnPS9c4D3_eCeARL_E$vl",
+     "bulk": true
+    }
+   },
+   "vertical": {
+    "3g7aOqnZPFsOHoQlQFACmh|3g7aOqnZPFsOHoQlQFACoA": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACmh",
+     "b": "3g7aOqnZPFsOHoQlQFACoA"
+    },
+    "3g7aOqnZPFsOHoQlQFACm0|3gIQdAPYT20Og4_q8ebzdJ": {
+     "verdict": "passable",
+     "a": "3g7aOqnZPFsOHoQlQFACm0",
+     "b": "3gIQdAPYT20Og4_q8ebzdJ"
+    },
+    "1fnPS9c4D3_eCeARL_E$vp|3g7aOqnZPFsOHoQlQFACoA": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vp",
+     "b": "3g7aOqnZPFsOHoQlQFACoA"
+    },
+    "1fnPS9c4D3_eCeARL_E$vi|3gIQdAPYT20Og4_q8ebzdJ": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vi",
+     "b": "3gIQdAPYT20Og4_q8ebzdJ"
+    },
+    "1fnPS9c4D3_eCeARL_E$vX|3gIQdAPYT20Og4_q8ebzdJ": {
+     "verdict": "passable",
+     "a": "1fnPS9c4D3_eCeARL_E$vX",
+     "b": "3gIQdAPYT20Og4_q8ebzdJ"
+    },
+    "1hBH8bG2D4Veii_rw1AlQ1|3g7aOqnZPFsOHoQlQFACmh": {
+     "verdict": "passable",
+     "a": "1hBH8bG2D4Veii_rw1AlQ1",
+     "b": "3g7aOqnZPFsOHoQlQFACmh"
+    },
+    "0h5UEozyvE$9ZOXqT3COt6|3gIQdAPYT20Og4_q8ebzdJ": {
+     "verdict": "passable",
+     "a": "0h5UEozyvE$9ZOXqT3COt6",
+     "b": "3gIQdAPYT20Og4_q8ebzdJ"
+    },
+    "3gIQdAPYT20Og4_q8ebzdJ|INF-0kWfSd9l1F5hqE2TIsDduT-0006-r00": {
+     "verdict": "passable",
+     "a": "3gIQdAPYT20Og4_q8ebzdJ",
+     "b": "INF-0kWfSd9l1F5hqE2TIsDduT-0006-r00"
+    },
+    "2QTLaWvQ16oQs1fDVZ7rAI|3g7aOqnZPFsOHoQlQFACm0": {
+     "verdict": "passable",
+     "a": "2QTLaWvQ16oQs1fDVZ7rAI",
+     "b": "3g7aOqnZPFsOHoQlQFACm0"
+    },
+    "0Vgr1wBTbBF9IQ7uE2P4Fy|0h5UEozyvE$9ZOXqT3COt6": {
+     "verdict": "passable",
+     "a": "0Vgr1wBTbBF9IQ7uE2P4Fy",
+     "b": "0h5UEozyvE$9ZOXqT3COt6"
+    },
+    "0AfG6dBOT22u7UTlFFE6EJ|INF-0kWfSd9l1F5hqE2TIsDduT-0006-r00": {
+     "verdict": "passable",
+     "a": "0AfG6dBOT22u7UTlFFE6EJ",
+     "b": "INF-0kWfSd9l1F5hqE2TIsDduT-0006-r00"
+    }
+   },
+   "added_edges": [],
+   "added_vertical": [],
+   "missing_rooms": [],
+   "model": "model_23",
+   "annotator": "AN",
+   "updated": "2026-09-03T15:30:17Z"
   }
  ]
 }

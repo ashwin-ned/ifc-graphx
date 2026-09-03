@@ -37,10 +37,10 @@ The app is the same in all three; they differ only in where the work is kept.
 |---|---|---|---|
 | **Dataset folder** | the annotator's own folder, on every save | Chrome or Edge | handing someone a folder; nothing to download and nothing to lose |
 | **GitHub Pages** | that browser, until downloaded | any browser | remote annotators, nothing to install |
+| **Local server** | your machine, over HTTP | Python + Flask | a team on one network |
 
 The 3D IFC view works in all three: from the hosted site it streams the model
 over HTTP, and from a folder it reads the file directly.
-| **Local server** | your machine, over HTTP | Python + Flask | a team on one network |
 
 ```bash
 # hand a colleague a folder of plans and IFC files
@@ -122,6 +122,35 @@ Two deliberate choices: `unsure` is recorded and held out rather than quietly
 becoming a negative, and buildings that are not fully judged are skipped rather
 than half-counted.
 
+## Looking at the graph
+
+```bash
+python annotator/export_graph.py annotated_gt/*.graph.json --out graphs
+```
+
+Three files per building, because "open it in a viewer" means different things.
+
+| | opens in | keeps |
+|---|---|---|
+| `.html` | any browser, nothing installed | the storeys as floor plates, rooms on their real coordinates |
+| `.graphml` | yEd, Cytoscape, Gephi, networkx | every node and edge attribute, plus position and colour |
+| `.gexf` | Gephi, networkx | the same, with `viz:position` and `viz:color` Gephi reads directly |
+
+The HTML page is the one to hand someone. Rooms sit at their true centroids on
+their own floor plate, so it reads as a building rather than a hairball: green
+links are doors, brown are open passages, and the dotted purple ones are the
+stairs and lifts chaining the floors. Colour says where a room came from — blue
+from the IFC, purple from pipeline recovery, amber from an annotator's pin —
+and hovering one gives its area, provenance and verdict.
+
+It also states the number of connected pieces, and says so loudly when that is
+more than one. A finished building should be a single component; four means
+either the annotation missed the links between them or the building really is
+that way, and both are worth seeing before the graph is used for anything.
+
+`export_graph.py` reads what `build_gt.py` writes and nothing else, so the
+export can be regenerated at any point without re-running the annotation.
+
 ## How it is built
 
 No bundler, no npm, no framework — the app is a handful of scripts with no
@@ -146,6 +175,7 @@ truncate an annotation file.
 
 ```bash
 python annotator/test_compose_parity.py   # the two composers agree
+python annotator/test_export_graph.py     # the export opens in networkx
 python annotator/test_static_build.py     # the published site works from /<repo>/
 python annotator/test_dir_mode.py         # folder mode saves and restores
 python annotator/test_viewer_deps.py      # CDN modules resolve; controls behave

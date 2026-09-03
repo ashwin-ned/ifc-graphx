@@ -51,6 +51,15 @@ jobs:
       - name: Check compose.js and compose.py agree
         run: python annotator/test_compose_parity.py
 
+      # The exported graph's whole point is that other people's software opens
+      # it, so networkx is installed here and made to read both formats back.
+      # It also checks the standalone page against a room named to break out of
+      # its <script> block -- room names come out of an IFC and can be anything.
+      - name: Check the graph export opens elsewhere
+        run: |
+          pip install networkx
+          python annotator/test_export_graph.py
+
       # Serves the built site from a subdirectory, as a project Pages site is
       # served, and drives store.js under node. Catches the absolute-path and
       # missing-manifest failures, which are invisible until after publishing.

@@ -1,214 +1,214 @@
 {
  "rooms": {
   "0MyMB1s_P4Zh6OoNQiQeJ3": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeJ4": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeGw": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeGv": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeG$": {
-   "verdict": "correct",
+   "verdict": "real",
    "label": "BEDROOM"
   },
   "0MyMB1s_P4Zh6OoNQiQeGp": {
-   "verdict": "correct",
+   "verdict": "real",
    "label": "BEDROOM"
   },
   "0MyMB1s_P4Zh6OoNQiQeI0": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeIF": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeD5": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeD0": {
-   "verdict": "correct",
+   "verdict": "real",
    "label": "BEDROOM"
   },
   "0MyMB1s_P4Zh6OoNQiQeDF": {
-   "verdict": "correct",
+   "verdict": "real",
    "label": "BEDROOM"
   },
   "0MyMB1s_P4Zh6OoNQiQeDA": {
-   "verdict": "correct",
+   "verdict": "real",
    "label": "BEDROOM"
   },
   "0MyMB1s_P4Zh6OoNQiQeMM": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeML": {
-   "verdict": "correct",
+   "verdict": "real",
    "label": "BEDROOM"
   },
   "0MyMB1s_P4Zh6OoNQiQeMk": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMj": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMe": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMZ": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMz": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMQ": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMV": {
    "label": "BEDROOM",
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMG": {
    "label": "BEDROOM",
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMB": {
    "label": "BEDROOM",
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMC": {
    "label": "BEDROOM",
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeM_": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "0MyMB1s_P4Zh6OoNQiQeMt": {
-   "verdict": "correct"
+   "verdict": "real"
   },
   "EXT-3qzZvSoWj5DvkOKdRuHvA4": {
    "label": "Terrace",
-   "verdict": "correct",
+   "verdict": "real",
    "bulk": true
   },
   "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "real",
    "bulk": true
   }
  },
  "edges": {
   "0MyMB1s_P4Zh6OoNQiQeMe|0MyMB1s_P4Zh6OoNQiQeMk": {
-   "verdict": "spurious",
+   "verdict": "not_passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMe",
    "b": "0MyMB1s_P4Zh6OoNQiQeMk"
   },
   "0MyMB1s_P4Zh6OoNQiQeMe|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMe",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00"
   },
   "0MyMB1s_P4Zh6OoNQiQeMe|0MyMB1s_P4Zh6OoNQiQeMj": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMe",
    "b": "0MyMB1s_P4Zh6OoNQiQeMj"
   },
   "0MyMB1s_P4Zh6OoNQiQeMZ|0MyMB1s_P4Zh6OoNQiQeMk": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMZ",
    "b": "0MyMB1s_P4Zh6OoNQiQeMk"
   },
   "0MyMB1s_P4Zh6OoNQiQeMC|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMC",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeMB|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMB",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeMM|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMM",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeML|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeML",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeMG|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMG",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeMV|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMV",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeMQ|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMQ",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeMZ|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMZ",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeMt|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMt",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeM_|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeM_",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeMz|INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMz",
    "b": "INF-2JF4e6axWHqu3u0C1FZlmi-0001-r00",
    "bulk": true
   },
   "0MyMB1s_P4Zh6OoNQiQeGw|EXT-1ZGO8hrFCHqw0v0026FpFv-r00": {
-   "verdict": "spurious",
+   "verdict": "not_passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeGw",
    "b": "EXT-1ZGO8hrFCHqw0v0026FpFv-r00"
   }
  },
  "vertical": {
   "0MyMB1s_P4Zh6OoNQiQeMz|EXT-1ZGO8hrFCHqw0v0026FpFv-r00": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeMz",
    "b": "EXT-1ZGO8hrFCHqw0v0026FpFv-r00"
   },
   "0MyMB1s_P4Zh6OoNQiQeJ3|0MyMB1s_P4Zh6OoNQiQeMt": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeJ3",
    "b": "0MyMB1s_P4Zh6OoNQiQeMt"
   },
   "0MyMB1s_P4Zh6OoNQiQeJ3|EXT-3qzZvSoWj5DvkOKdRuHvA4": {
-   "verdict": "correct",
+   "verdict": "passable",
    "a": "0MyMB1s_P4Zh6OoNQiQeJ3",
    "b": "EXT-3qzZvSoWj5DvkOKdRuHvA4"
   },
   "EXT-1ZGO8hrFCHqw0v0026FpFv-r00|EXT-3qzZvSoWj5DvkOKdRuHvA4": {
-   "verdict": "spurious",
+   "verdict": "not_passable",
    "a": "EXT-1ZGO8hrFCHqw0v0026FpFv-r00",
    "b": "EXT-3qzZvSoWj5DvkOKdRuHvA4"
   }

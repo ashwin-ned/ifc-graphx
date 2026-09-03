@@ -14,6 +14,10 @@ dist/
 dataset/
 results/
 
+# Left beside a file by migrate_verdicts.py. Useful locally, never worth
+# committing -- the version it backs up is already in the history.
+*.bak
+
 __pycache__/
 *.py[cod]
 .venv/
