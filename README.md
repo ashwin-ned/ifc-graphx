@@ -40,7 +40,15 @@ The app is the same in all three; they differ only in where the work is kept.
 | **Local server** | your machine, over HTTP | Python + Flask | a team on one network |
 
 The 3D IFC view works in all three: from the hosted site it streams the model
-over HTTP, and from a folder it reads the file directly.
+over HTTP, and from a folder it reads the file directly. The server also looks
+one directory up for a model's `.ifc`, so a corpus kept as a folder of IFC files
+with the plans exported into a `plans/` subfolder works as it stands:
+
+```bash
+python main/export_plans.py 'dataset/<corpus>/*.ifc' \
+    --out dataset/<corpus>/plans -j 8
+python annotator/app.py --plans dataset/<corpus>/plans
+```
 
 ```bash
 # hand a colleague a folder of plans and IFC files
@@ -177,6 +185,7 @@ truncate an annotation file.
 python annotator/test_compose_parity.py   # the two composers agree
 python annotator/test_export_graph.py     # the export opens in networkx
 python annotator/test_static_build.py     # the published site works from /<repo>/
+python annotator/test_server_mode.py      # the Flask backend, real corpus layout
 python annotator/test_dir_mode.py         # folder mode saves and restores
 python annotator/test_viewer_deps.py      # CDN modules resolve; controls behave
 python annotator/test_e2e.py              # the whole app, in a real browser

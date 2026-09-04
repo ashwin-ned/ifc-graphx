@@ -66,6 +66,16 @@ jobs:
       - name: Check the static build works from a subpath
         run: python annotator/test_static_build.py
 
+      # The third backend. A relative --plans outside annotator/ served 404s for
+      # every plan, because send_from_directory resolves a relative directory
+      # against the app root and not the working directory. This drives the
+      # awkward layout a real corpus has: plans in a subfolder, IFC files in
+      # the parent, path given relative.
+      - name: Check the local server backend
+        run: |
+          pip install flask
+          python annotator/test_server_mode.py
+
       # The dataset-folder backend writes into the annotator's own filesystem.
       # A truncated annotation file loses a day's work and leaves no trace, so
       # the write path (including two saves racing) is checked here.

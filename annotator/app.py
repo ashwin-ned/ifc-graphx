@@ -30,8 +30,13 @@ from compose import compose
 HERE = os.path.dirname(os.path.abspath(__file__))
 # Overridable so a plan set augmented by resolve_pins.py can be served without
 # copying it over the originals.
-DATA = os.environ.get("BIMSG_PLANS") or os.path.join(HERE, "data")
-ANNO = os.environ.get("BIMSG_ANNOTATIONS") or os.path.join(HERE, "annotations")
+# Absolute, both of them: send_from_directory resolves a relative directory
+# against the app's root path (annotator/), so a relative --plans or
+# BIMSG_PLANS pointing anywhere else served 404s while os.path.exists said the
+# file was right there. --plans already absolutised; the env vars did not.
+DATA = os.path.abspath(os.environ.get("BIMSG_PLANS") or os.path.join(HERE, "data"))
+ANNO = os.path.abspath(os.environ.get("BIMSG_ANNOTATIONS")
+                       or os.path.join(HERE, "annotations"))
 
 # `static_url_path=""` serves the app's files from the root, so index.html can
 # reference them relatively ("app.js", not "/static/app.js"). That matters
@@ -82,14 +87,29 @@ def models():
         # The 3D view needs to know an IFC is available before it offers the
         # tab. Without this the server build could never show the model, even
         # with the files sitting in annotator/data next to the plans.
-        ifc = os.path.join(DATA, f"{name}.ifc")
-        has_ifc = os.path.exists(ifc)
+        d = ifc_dir(name)
+        ifc = os.path.join(d, f"{name}.ifc") if d else None
+        has_ifc = ifc is not None
         out.append({"model": name, "storeys": len(doc["storeys"]),
                     "rooms": n_rooms, "edges": n_edges, "vertical": n_vert,
                     "items": n_rooms + n_edges + n_vert, "annotated": done,
                     "hasIfc": has_ifc,
                     "ifcBytes": os.path.getsize(ifc) if has_ifc else 0})
     return jsonify(out)
+
+
+def ifc_dir(name: str):
+    """Where this model's IFC lives, or None.
+
+    Beside the plan is the normal case. The parent is checked too because a
+    corpus is naturally kept as a directory of IFC files with the plans
+    exported into a `plans/` subfolder -- pointing --plans at that subfolder
+    should not silently cost the 3D view.
+    """
+    for d in (DATA, os.path.dirname(os.path.abspath(DATA))):
+        if os.path.exists(os.path.join(d, f"{name}.ifc")):
+            return d
+    return None
 
 
 @app.route("/api/plan/<model>")
@@ -108,9 +128,10 @@ def ifc(model):
         name = f"{_safe(model)}.ifc"
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
-    if not os.path.exists(os.path.join(DATA, name)):
+    d = ifc_dir(name[:-len(".ifc")])
+    if d is None:
         return jsonify({"error": "no IFC for this model"}), 404
-    return send_from_directory(DATA, name, mimetype="application/octet-stream")
+    return send_from_directory(d, name, mimetype="application/octet-stream")
 
 
 @app.route("/api/annotation/<model>/<annotator>", methods=["GET"])
