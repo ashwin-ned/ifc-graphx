@@ -60,6 +60,12 @@ jobs:
           pip install networkx
           python annotator/test_export_graph.py
 
+      # The checklist decides what a week of someone's annotation goes on, so
+      # the failure that matters is a row that reads plausibly and is wrong.
+      # Driven against a synthetic corpus where every answer is known.
+      - name: Check the annotators' checklist
+        run: python annotator/test_checklist.py
+
       # Serves the built site from a subdirectory, as a project Pages site is
       # served, and drives store.js under node. Catches the absolute-path and
       # missing-manifest failures, which are invisible until after publishing.

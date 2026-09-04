@@ -66,6 +66,31 @@ In **dataset folder** mode the tool writes `bimsg-annotations.json` into that
 folder after every save, so the file to send back is already there and
 reopening the folder restores everything.
 
+## Handing out a corpus
+
+```bash
+python main/export_plans.py 'dataset/<corpus>/*.ifc' --out dataset/<corpus>/plans -j 8
+python annotator/make_checklist.py --ifc dataset/<corpus> \
+    --annotations 'annotations/*.json'
+```
+
+A corpus is a pile of files with no sign of which are worth an afternoon and
+which will waste one. The checklist is a CSV with a row per model: how big the
+job is, a `[ ]` to tick, a column for who took it, and notes derived from the
+file rather than guessed —
+
+| the note says | because |
+|---|---|
+| `skip` | the IFC declares no `IfcBuildingStorey`, so its spaces cannot be put on a floor at all |
+| no floor-to-floor links | nothing was proposed across N storeys; the floors have to be chained by hand |
+| two storeys N m apart | one is a structural level or a mezzanine, not an occupiable floor |
+| no doors found | every link was inferred from geometry alone, so expect more wrong ones |
+| rooms are very large | the file models a whole floor as one space rather than as rooms |
+
+Pass `--annotations` and anything already returned starts ticked, with `[~]`
+and *what is still outstanding* for a building someone started and did not
+finish — a half-judged model ticked as done is one nobody ever goes back to.
+
 ## Turning a missing-room pin into a node
 
 A pin is a point, a label and a storey. That records a real recall failure, but
@@ -184,6 +209,7 @@ truncate an annotation file.
 ```bash
 python annotator/test_compose_parity.py   # the two composers agree
 python annotator/test_export_graph.py     # the export opens in networkx
+python annotator/test_checklist.py        # the corpus checklist tells the truth
 python annotator/test_static_build.py     # the published site works from /<repo>/
 python annotator/test_server_mode.py      # the Flask backend, real corpus layout
 python annotator/test_dir_mode.py         # folder mode saves and restores
