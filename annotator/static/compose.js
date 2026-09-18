@@ -34,7 +34,7 @@
     const addedV = anno.added_vertical || [];
     const missing = anno.missing_rooms || [];
 
-    const nodes = [], edges = [], heldOut = [], requests = [];
+    const nodes = [], edges = [], heldOut = [], requests = [], negatives = [];
     const counts = {
       rooms_total: 0, rooms_judged: 0, rooms_kept: 0,
       rooms_labelled_only: 0, rooms_bulk: 0,
@@ -61,7 +61,18 @@
         // Looked at and relabelled, but never judged -- counted apart so
         // "not started" and "nearly done" are distinguishable.
         else if (a.label || a.note) counts.rooms_labelled_only += 1;
-        if (v === "not_a_room") continue;
+        if (v === "not_a_room") {
+          // A rejection is a judgement, not an absence. Without it a scorer
+          // can measure recall and never precision.
+          const neg = { room: r.id, kind: "room", storey: st.gid };
+          if (a.bulk) neg.bulk = true;
+          negatives.push(neg);
+          continue;
+        }
+        if (v === "unsure") {
+          heldOut.push({ room: r.id, kind: "room", storey: st.gid });
+          continue;
+        }
         if (v === "merge" || v === "split")
           requests.push({ room: r.id, request: v, storey: st.gid, note: a.note || "" });
         if (!v) continue;                 // unjudged rooms are not ground truth
@@ -101,6 +112,19 @@
         if (v) { counts.links_judged += 1; if (a.bulk) counts.links_bulk += 1; }
         if (v === "unsure") {
           heldOut.push({ a: e.a, b: e.b, kind: "link", storey: st.gid });
+          continue;
+        }
+        if (v === "not_passable") {
+          // Kept apart from an unjudged link, which is silence and must never
+          // be read as a negative.
+          if (!keep.has(e.a) || !keep.has(e.b)) {
+            heldOut.push({ a: e.a, b: e.b, kind: "link", storey: st.gid,
+                           why: "endpoint room not confirmed" });
+          } else {
+            const neg = { a: e.a, b: e.b, kind: "link", storey: st.gid };
+            if (a.bulk) neg.bulk = true;
+            negatives.push(neg);
+          }
           continue;
         }
         if (v !== "passable") continue;
@@ -144,6 +168,15 @@
         heldOut.push({ a: v.a, b: v.b, kind: "vertical" });
         continue;
       }
+      if (verdict === "not_passable") {
+        if (!keep.has(v.a) || !keep.has(v.b)) {
+          heldOut.push({ a: v.a, b: v.b, kind: "vertical",
+                         why: "endpoint room not confirmed" });
+        } else {
+          negatives.push({ a: v.a, b: v.b, kind: "vertical" });
+        }
+        continue;
+      }
       if (verdict !== "passable") continue;
       if (!keep.has(v.a) || !keep.has(v.b)) {
         heldOut.push({ a: v.a, b: v.b, kind: "vertical",
@@ -173,6 +206,21 @@
       counts.links_judged === counts.links_total &&
       counts.vertical_judged === counts.vertical_total;
 
+    // What this review does and does not cover. A scorer that does not know
+    // the scope will read silence as a negative: the reviewer saw the links the
+    // pipeline proposed, so a pair nobody proposed was never judged at all.
+    const reviewScope = {
+      rooms_reviewed: counts.rooms_judged,
+      rooms_total: counts.rooms_total,
+      links_reviewed: counts.links_judged,
+      links_total: counts.links_total,
+      vertical_reviewed: counts.vertical_judged,
+      vertical_total: counts.vertical_total,
+      negatives_cover: "links the pipeline proposed and a reviewer rejected",
+      unreviewed_is_not_negative: true,
+      pairs_never_proposed: "not judged",
+    };
+
     return {
       model: building,
       annotator: anno.annotator === undefined ? null : anno.annotator,
@@ -180,9 +228,12 @@
       source: "annotated",
       complete: complete,
       counts: counts,
+      review_scope: reviewScope,
       nodes: nodes,
       edges: edges,
       held_out: heldOut,
+      // Reviewed and ruled out. These are what make precision measurable.
+      negatives: negatives,
       requests: requests,
       missing_rooms: missing,
     };
@@ -196,12 +247,21 @@
       source: "annotated",
       annotator: composed.annotator === undefined ? null : composed.annotator,
       complete: composed.complete,
+      review_scope: composed.review_scope,
       rooms: rooms.map((r) => ({
         rid: r.id, label: r.label, storey: r.parent,
         area: r.area === undefined ? null : r.area,
       })),
       edges: composed.edges.filter((e) => rel.includes(e.relation))
         .map((e) => ({ a: e.a, b: e.b, type: e.relation })),
+      // The name `eval_connectivity` has always used for a reviewed pair that
+      // is adjacent and not joined.
+      adjacent_not_connected: composed.negatives
+        .filter((n) => n.kind === "link" || n.kind === "vertical")
+        .map((n) => ({ a: n.a, b: n.b })),
+      // Regions a reviewer said are not rooms: confirmed false positives.
+      rooms_rejected: composed.negatives
+        .filter((n) => n.kind === "room").map((n) => n.room),
       held_out: composed.held_out,
     };
   }

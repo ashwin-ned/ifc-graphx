@@ -15,7 +15,11 @@ Verdict semantics, deliberately conservative:
 
     real / passable      -> in the graph
     not_a_room /
-    not_passable         -> not in the graph
+    not_passable         -> not in the graph, and recorded in `negatives`. A
+                 rejection is a judgement, not an absence: it is the only thing
+                 that tells a scorer a pair was looked at and ruled out, and
+                 dropping it left an export that could measure recall but never
+                 precision.
     unsure    -> not in the graph, but recorded in `held_out` so it can be
                  routed to a second annotator instead of silently becoming a
                  negative
@@ -64,7 +68,7 @@ def compose(plan: dict, anno: dict) -> dict:
     added_v = anno.get("added_vertical", []) or []
     missing = anno.get("missing_rooms", []) or []
 
-    nodes, edges, held_out, requests = [], [], [], []
+    nodes, edges, held_out, requests, negatives = [], [], [], [], []
     counts = {"rooms_total": 0, "rooms_judged": 0, "rooms_kept": 0,
               "rooms_labelled_only": 0,
               "rooms_bulk": 0,
@@ -100,6 +104,13 @@ def compose(plan: dict, anno: dict) -> dict:
                 # mistake that loses work silently.
                 counts["rooms_labelled_only"] += 1
             if v == "not_a_room":
+                negatives.append({"room": r["id"], "kind": "room",
+                                  "storey": st["gid"],
+                                  **({"bulk": True} if a.get("bulk") else {})})
+                continue
+            if v == "unsure":
+                held_out.append({"room": r["id"], "kind": "room",
+                                 "storey": st["gid"]})
                 continue
             if v in ("merge", "split"):
                 requests.append({"room": r["id"], "request": v,
@@ -150,6 +161,18 @@ def compose(plan: dict, anno: dict) -> dict:
                 held_out.append({"a": e["a"], "b": e["b"], "kind": "link",
                                  "storey": st["gid"]})
                 continue
+            if v == "not_passable":
+                # A reviewed rejection. Kept apart from an unjudged link, which
+                # is silence and must never be read as a negative.
+                if e["a"] not in keep_rooms or e["b"] not in keep_rooms:
+                    held_out.append({"a": e["a"], "b": e["b"], "kind": "link",
+                                     "storey": st["gid"],
+                                     "why": "endpoint room not confirmed"})
+                else:
+                    negatives.append({"a": e["a"], "b": e["b"], "kind": "link",
+                                      "storey": st["gid"],
+                                      **({"bulk": True} if a.get("bulk") else {})})
+                continue
             if v != "passable":
                 continue
             # A link is only meaningful if both its rooms survived.
@@ -189,6 +212,13 @@ def compose(plan: dict, anno: dict) -> dict:
         if verdict == "unsure":
             held_out.append({"a": v["a"], "b": v["b"], "kind": "vertical"})
             continue
+        if verdict == "not_passable":
+            if v["a"] not in keep_rooms or v["b"] not in keep_rooms:
+                held_out.append({"a": v["a"], "b": v["b"], "kind": "vertical",
+                                 "why": "endpoint room not confirmed"})
+            else:
+                negatives.append({"a": v["a"], "b": v["b"], "kind": "vertical"})
+            continue
         if verdict != "passable":
             continue
         if v["a"] not in keep_rooms or v["b"] not in keep_rooms:
@@ -212,6 +242,22 @@ def compose(plan: dict, anno: dict) -> dict:
                 and counts["links_judged"] == counts["links_total"]
                 and counts["vertical_judged"] == counts["vertical_total"])
 
+    # What this review does and does not cover. A scorer that does not know
+    # the scope will read silence as a negative: the reviewer saw the links the
+    # pipeline proposed, so a pair nobody proposed was never judged at all, and
+    # counting it as a true negative would invent agreement.
+    review_scope = {
+        "rooms_reviewed": counts["rooms_judged"],
+        "rooms_total": counts["rooms_total"],
+        "links_reviewed": counts["links_judged"],
+        "links_total": counts["links_total"],
+        "vertical_reviewed": counts["vertical_judged"],
+        "vertical_total": counts["vertical_total"],
+        "negatives_cover": "links the pipeline proposed and a reviewer rejected",
+        "unreviewed_is_not_negative": True,
+        "pairs_never_proposed": "not judged",
+    }
+
     return {
         "model": building,
         "annotator": anno.get("annotator"),
@@ -219,17 +265,26 @@ def compose(plan: dict, anno: dict) -> dict:
         "source": "annotated",
         "complete": complete,
         "counts": counts,
+        "review_scope": review_scope,
         "nodes": nodes,
         "edges": edges,
         # Not ground truth, but not thrown away either.
         "held_out": held_out,
+        # Reviewed and ruled out. These are what make precision measurable.
+        "negatives": negatives,
         "requests": requests,
         "missing_rooms": missing,
     }
 
 
 def connectivity_gt(composed: dict) -> dict:
-    """Reduce a composed graph to the pair form `eval_connectivity` expects."""
+    """Reduce a composed graph to the pair form `eval_connectivity` expects.
+
+    Positive, negative and unknown pairs all travel, with the scope that says
+    how far the review reached. A positives-only export cannot support a
+    precision figure, and the evaluator raised `KeyError` on it rather than
+    saying so.
+    """
     rooms = [n for n in composed["nodes"] if n["layer"] == "space"]
     pos = [{"a": e["a"], "b": e["b"], "type": e["relation"]}
            for e in composed["edges"]
@@ -240,8 +295,19 @@ def connectivity_gt(composed: dict) -> dict:
         "source": "annotated",
         "annotator": composed.get("annotator"),
         "complete": composed["complete"],
+        "review_scope": composed["review_scope"],
         "rooms": [{"rid": r["id"], "label": r["label"],
                    "storey": r["parent"], "area": r.get("area")} for r in rooms],
         "edges": pos,
+        # The name `eval_connectivity` has always used for a reviewed pair that
+        # is adjacent and not joined. Emitting it is what makes this export
+        # readable by the evaluator it was written for.
+        "adjacent_not_connected": [{"a": n["a"], "b": n["b"]}
+                                   for n in composed["negatives"]
+                                   if n["kind"] in ("link", "vertical")],
+        # Regions a reviewer said are not rooms: confirmed false positives,
+        # which room-instance scoring can use directly.
+        "rooms_rejected": [n["room"] for n in composed["negatives"]
+                           if n["kind"] == "room"],
         "held_out": composed["held_out"],
     }

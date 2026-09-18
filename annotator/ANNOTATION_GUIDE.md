@@ -364,7 +364,10 @@ Some storeys genuinely have no rooms (roof levels, plant spaces). Move on.
 **Can two of us annotate the same building?**
 Yes, and please do for at least a couple of buildings — put different names in
 the box. Comparing two independent annotations tells us how reliable the data
-is, which sets the ceiling on every result we can claim from it.
+is. That number gets reported alongside every result measured against it. It is
+not a ceiling on what a method can score — where the two of you disagree, one of
+you may simply be right — but a reader needs to know how much the labels
+themselves wobble.
 
 **Something is broken.**
 Your work is saved server-side every 20 seconds. Note the model and what you

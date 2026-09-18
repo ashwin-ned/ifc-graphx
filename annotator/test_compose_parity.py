@@ -173,6 +173,16 @@ def main():
                     json.dump(anno, fh)
 
                 g_py = compose(plan, anno)
+                unsure = {rid for rid, value in anno.get("rooms", {}).items()
+                          if value.get("verdict") == "unsure"}
+                plan_ids = {room["id"] for st in plan["storeys"]
+                            for room in st["rooms"]}
+                assert not unsure & {node["id"] for node in g_py["nodes"]}
+                assert unsure & plan_ids <= {
+                    item["room"] for item in g_py["held_out"]
+                    if item.get("kind") == "room"}
+                assert all(edge["a"] not in unsure and edge["b"] not in unsure
+                           for edge in g_py["edges"])
                 out_py = {"graph": g_py, "gt": connectivity_gt(g_py)}
                 r = subprocess.run([NODE, drv, js, pp, ap],
                                    capture_output=True, text=True)

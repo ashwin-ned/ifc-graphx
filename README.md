@@ -147,13 +147,24 @@ python annotator/build_gt.py --inbox ~/returned --out annotated_gt
 ```
 
 This writes, per finished building, a hierarchical `*.graph.json` and a
-`*.gt.json` of room pairs, and reports inter-annotator agreement where two
-people annotated the same building. That agreement is the ceiling on any score
-measured against the data, so it is reported whether or not it flatters.
+`*.gt.json` carrying positive pairs, reviewed rejections
+(`adjacent_not_connected`), regions judged not to be rooms (`rooms_rejected`),
+uncertain and unconfirmed items (`held_out`), and the `review_scope` that says
+how far the review reached. It also reports inter-annotator agreement where two
+people annotated the same building, whether or not it flatters.
 
-Two deliberate choices: `unsure` is recorded and held out rather than quietly
-becoming a negative, and buildings that are not fully judged are skipped rather
-than half-counted.
+Agreement characterises how uncertain the labels are. It is **not** a ceiling on
+model accuracy: a method can be right where a reviewer was wrong, and treating
+it as a bound would reward a review process that agreed by being careless.
+
+Three deliberate choices: `unsure` is recorded and held out rather than quietly
+becoming a negative; a **rejection is kept**, because it is the only thing that
+makes precision measurable and dropping it left an export that could measure
+recall and nothing else; and buildings that are not fully judged are skipped
+rather than half-counted.
+
+Negatives cover the links the pipeline proposed and a reviewer rejected. A pair
+nobody proposed was never judged, and is not a negative.
 
 ## Looking at the graph
 

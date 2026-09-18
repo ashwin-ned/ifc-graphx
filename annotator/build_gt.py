@@ -6,9 +6,12 @@ tool's download button uses, so nothing can drift between them) and writes the
 pair form the connectivity evaluator reads.
 
 Where two people annotated the same building it also reports inter-annotator
-agreement. That number is the ceiling on any score measured against this data:
-if two humans agree on only 80% of links, a method cannot meaningfully be shown
-to be better than 80% here, and a paper that omits it is overclaiming.
+agreement. Report it: it characterises how uncertain these labels are, and a
+paper that omits it is hiding that uncertainty. It is **not** a ceiling on model
+accuracy. Two reviewers disagreeing about one corridor does not make the
+corridor ambiguous -- one of them may simply be wrong, and a method can be right
+where a reviewer was not. Treating agreement as a mathematical bound would also
+reward an annotation process that agreed by being careless.
 
     python annotator/build_gt.py --out dataset/annotated_gt
 
@@ -205,8 +208,8 @@ def main():
                       f"same verdict for {r['skew']:.0%} of items, so chance "
                       f"agreement ≈ observed. Quote raw agreement instead.")
     if not agree_rows:
-        print("  (no building annotated twice — agreement cannot be measured yet,\n"
-              "   so any score from this data has an unknown ceiling)")
+        print("  (no building annotated twice — label uncertainty is therefore\n"
+              "   unmeasured, and cannot be reported alongside any score)")
     print()
 
     if args.agreement_only:
